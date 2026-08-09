@@ -14,27 +14,13 @@ export const getBackendUrl = () => {
     return activeCustomUrl;
   }
 
-  // 1. Dynamic Metro Host IP from Expo Go / CLI connection
-  const hostUri = Constants.expoConfig?.hostUri || Constants.manifest2?.extra?.expoGo?.developer?.inputs?.find((i) => i.type === 'remote')?.value;
-  if (hostUri) {
-    const ip = hostUri.split(':')[0];
-    if (ip && ip !== 'localhost' && ip !== '127.0.0.1') {
-      return `http://${ip}:5000`;
-    }
+  // 1. Explicit Environment Variable (Render Production Cloud)
+  if (process.env.EXPO_PUBLIC_API_URL) {
+    return process.env.EXPO_PUBLIC_API_URL.trim().replace(/\/+$/, '');
   }
 
-  // 2. Explicit Environment Variable if non-localhost
-  if (process.env.EXPO_PUBLIC_API_URL && !process.env.EXPO_PUBLIC_API_URL.includes('localhost')) {
-    return process.env.EXPO_PUBLIC_API_URL;
-  }
-
-  // 3. Android Emulator Fallback
-  if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:5000';
-  }
-
-  // 4. Physical Device LAN IP Fallback
-  return 'http://192.168.1.5:5000';
+  // 2. Default Cloud Production Server
+  return 'https://pulsechat-backend-fgzm.onrender.com';
 };
 
 const getHeaders = (token) => ({

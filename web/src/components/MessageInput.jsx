@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Smile } from 'lucide-react';
+
+const QUICK_EMOJIS = ['👍', '❤️', '🔥', '😂', '🎉', '🚀', '💯', '👋'];
 
 export const MessageInput = ({ onSendMessage, onInputChange, disabled = false }) => {
   const [content, setContent] = useState('');
+  const [showEmojis, setShowEmojis] = useState(false);
 
   const handleSubmit = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (!content.trim() || disabled) return;
 
     onSendMessage(content.trim());
     setContent('');
+    setShowEmojis(false);
   };
 
   const handleKeyDown = (e) => {
@@ -26,79 +30,138 @@ export const MessageInput = ({ onSendMessage, onInputChange, disabled = false })
     }
   };
 
+  const handleAddEmoji = (emoji) => {
+    setContent((prev) => prev + emoji);
+    if (onInputChange) onInputChange();
+  };
+
   return (
-    <form
-      onSubmit={handleSubmit}
+    <div
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
         padding: '14px 24px',
-        backgroundColor: 'var(--bg-card)',
+        backgroundColor: 'var(--bg-card-solid)',
         borderTop: '1px solid var(--border-color)',
+        position: 'relative',
       }}
     >
-      <input
-        type="text"
-        value={content}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        placeholder={disabled ? 'Disconnected from chat server...' : 'Type a message...'}
-        disabled={disabled}
-        style={{
-          flex: 1,
-          padding: '12px 18px',
-          backgroundColor: 'var(--bg-input)',
-          border: '1px solid var(--border-color)',
-          borderRadius: 'var(--radius-lg)',
-          color: 'var(--text-main)',
-          fontSize: '0.925rem',
-          outline: 'none',
-          transition: 'all 0.2s ease',
-        }}
-        onFocus={(e) => {
-          e.target.style.borderColor = 'var(--primary)';
-          e.target.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.15)';
-        }}
-        onBlur={(e) => {
-          e.target.style.borderColor = 'var(--border-color)';
-          e.target.style.boxShadow = 'none';
-        }}
-      />
+      {/* Quick Emoji Picker Popover */}
+      {showEmojis && (
+        <div
+          className="animate-fade-in glass-panel"
+          style={{
+            position: 'absolute',
+            bottom: '70px',
+            left: '24px',
+            padding: '10px 14px',
+            borderRadius: 'var(--radius-md)',
+            display: 'flex',
+            gap: '8px',
+            boxShadow: 'var(--shadow-md)',
+            zIndex: 20,
+          }}
+        >
+          {QUICK_EMOJIS.map((emoji) => (
+            <button
+              key={emoji}
+              type="button"
+              onClick={() => handleAddEmoji(emoji)}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: '1.25rem',
+                cursor: 'pointer',
+                padding: '4px',
+                borderRadius: '6px',
+                transition: 'transform 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.25)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      )}
 
-      <button
-        type="submit"
-        disabled={disabled || !content.trim()}
+      <form
+        onSubmit={handleSubmit}
         style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          width: '44px',
-          height: '44px',
-          borderRadius: '50%',
-          backgroundColor: disabled || !content.trim() ? 'rgba(99, 102, 241, 0.3)' : 'var(--primary)',
-          color: '#FFFFFF',
-          border: 'none',
-          cursor: disabled || !content.trim() ? 'not-allowed' : 'pointer',
-          transition: 'all 0.2s ease',
-          boxShadow: disabled || !content.trim() ? 'none' : 'var(--shadow-sm)',
+          gap: '12px',
         }}
-        onMouseEnter={(e) => {
-          if (!disabled && content.trim()) {
-            e.currentTarget.style.backgroundColor = 'var(--primary-hover)';
-            e.currentTarget.style.transform = 'scale(1.05)';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!disabled && content.trim()) {
-            e.currentTarget.style.backgroundColor = 'var(--primary)';
-            e.currentTarget.style.transform = 'scale(1)';
-          }
-        }}
-        title="Send message"
       >
-        <Send size={18} />
-      </button>
-    </form>
+        <button
+          type="button"
+          onClick={() => setShowEmojis((prev) => !prev)}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: showEmojis ? 'var(--primary)' : 'var(--text-dim)',
+            cursor: 'pointer',
+            padding: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'color 0.2s ease',
+          }}
+          title="Add emoji"
+        >
+          <Smile size={20} />
+        </button>
+
+        <input
+          type="text"
+          value={content}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          placeholder={disabled ? 'Disconnected from chat server...' : 'Type a message...'}
+          disabled={disabled}
+          className="glass-input"
+          style={{
+            flex: 1,
+            padding: '12px 18px',
+            borderRadius: 'var(--radius-lg)',
+            fontSize: '0.925rem',
+          }}
+        />
+
+        <button
+          type="submit"
+          disabled={disabled || !content.trim()}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '46px',
+            height: '46px',
+            borderRadius: '50%',
+            background: disabled || !content.trim() ? 'rgba(99, 102, 241, 0.25)' : 'var(--primary-gradient)',
+            color: '#FFFFFF',
+            border: 'none',
+            cursor: disabled || !content.trim() ? 'not-allowed' : 'pointer',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: disabled || !content.trim() ? 'none' : 'var(--shadow-glow)',
+          }}
+          onMouseEnter={(e) => {
+            if (!disabled && content.trim()) {
+              e.currentTarget.style.transform = 'scale(1.08)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!disabled && content.trim()) {
+              e.currentTarget.style.transform = 'scale(1)';
+            }
+          }}
+          title="Send message"
+        >
+          <Send size={18} />
+        </button>
+      </form>
+    </div>
   );
 };

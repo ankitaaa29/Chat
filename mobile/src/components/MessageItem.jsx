@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     marginVertical: 4,
-    marginHorizontal: 12,
+    marginHorizontal: 14,
     alignItems: 'flex-end',
   },
   selfContainer: {
@@ -50,6 +50,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 8,
     marginBottom: 16,
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   avatarText: {
     color: '#FFFFFF',
@@ -69,18 +73,18 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     color: '#94A3B8',
-    marginBottom: 3,
+    marginBottom: 4,
     marginLeft: 4,
   },
   bubble: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+    borderRadius: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   selfBubble: {
     backgroundColor: '#6366F1',
@@ -90,11 +94,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#1E293B',
     borderBottomLeftRadius: 4,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   messageText: {
     fontSize: 15,
-    lineHeight: 20,
+    lineHeight: 21,
   },
   selfMessageText: {
     color: '#FFFFFF',
@@ -105,7 +109,7 @@ const styles = StyleSheet.create({
   timestampText: {
     fontSize: 10,
     color: '#64748B',
-    marginTop: 3,
+    marginTop: 4,
     marginHorizontal: 4,
   },
 });

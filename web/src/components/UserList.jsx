@@ -1,60 +1,102 @@
-import React from 'react';
-import { Users, Circle, ShieldCheck } from 'lucide-react';
+import React, { useState } from 'react';
+import { Users, Search, Sparkles } from 'lucide-react';
 import { getInitials, getUserAvatarColor } from '../utils/formatters';
 
 export const UserList = ({ onlineUsers = [], currentUsername, isOpen = false }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredUsers = onlineUsers.filter((user) =>
+    user.username.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <aside
-      className={`sidebar ${isOpen ? 'mobile-open' : ''}`}
+      className={`sidebar ${isOpen ? 'mobile-open' : ''} glass-panel`}
       style={{
-        backgroundColor: 'var(--bg-card)',
-        borderRight: '1px solid var(--border-color)',
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
         zIndex: 10,
+        borderRight: '1px solid var(--border-color)',
       }}
     >
       {/* Sidebar Header */}
       <div
         style={{
-          padding: '18px 20px',
+          padding: '20px 20px 14px 20px',
           borderBottom: '1px solid var(--border-color)',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          flexDirection: 'column',
+          gap: '14px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Users size={18} color="var(--primary)" />
-          <h2
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: 'var(--radius-md)',
+                backgroundColor: 'var(--primary-light)',
+                color: 'var(--primary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Users size={16} />
+            </div>
+            <h2
+              style={{
+                fontFamily: 'var(--font-heading)',
+                fontSize: '0.95rem',
+                fontWeight: '700',
+                color: 'var(--text-main)',
+                letterSpacing: '0.01em',
+              }}
+            >
+              Active Members
+            </h2>
+          </div>
+          <span
             style={{
-              fontFamily: 'var(--font-heading)',
-              fontSize: '0.95rem',
+              background: 'var(--primary-gradient)',
+              color: '#FFFFFF',
+              fontSize: '0.72rem',
               fontWeight: '700',
-              color: 'var(--text-main)',
-              letterSpacing: '0.01em',
-              textTransform: 'uppercase',
+              padding: '2px 9px',
+              borderRadius: 'var(--radius-full)',
+              boxShadow: 'var(--shadow-sm)',
             }}
           >
-            Online Users
-          </h2>
+            {onlineUsers.length}
+          </span>
         </div>
-        <span
-          style={{
-            backgroundColor: 'var(--primary-light)',
-            color: 'var(--primary)',
-            fontSize: '0.75rem',
-            fontWeight: '700',
-            padding: '2px 8px',
-            borderRadius: 'var(--radius-full)',
-          }}
-        >
-          {onlineUsers.length}
-        </span>
+
+        {/* Search Input Bar */}
+        <div style={{ position: 'relative' }}>
+          <Search
+            size={14}
+            color="var(--text-dim)"
+            style={{ position: 'absolute', left: '12px', top: '10px' }}
+          />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search online users..."
+            className="glass-input"
+            style={{
+              width: '100%',
+              padding: '7px 12px 7px 32px',
+              borderRadius: 'var(--radius-md)',
+              fontSize: '0.8125rem',
+            }}
+          />
+        </div>
       </div>
 
-      {/* Online Users List */}
+      {/* Online Users Roster */}
       <div
         style={{
           flex: 1,
@@ -65,19 +107,19 @@ export const UserList = ({ onlineUsers = [], currentUsername, isOpen = false }) 
           gap: '6px',
         }}
       >
-        {onlineUsers.length === 0 ? (
+        {filteredUsers.length === 0 ? (
           <div
             style={{
-              padding: '20px',
+              padding: '30px 20px',
               textAlign: 'center',
               color: 'var(--text-dim)',
               fontSize: '0.85rem',
             }}
           >
-            No active users online
+            {searchQuery ? 'No users matching search' : 'No active users online'}
           </div>
         ) : (
-          onlineUsers.map((user) => {
+          filteredUsers.map((user) => {
             const isSelf = user.username === currentUsername;
             const avatarColor = getUserAvatarColor(user.username);
 
@@ -88,17 +130,23 @@ export const UserList = ({ onlineUsers = [], currentUsername, isOpen = false }) 
                   display: 'flex',
                   alignItems: 'center',
                   gap: '12px',
-                  padding: '8px 12px',
+                  padding: '9px 12px',
                   borderRadius: 'var(--radius-md)',
-                  backgroundColor: isSelf ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
-                  transition: 'background 0.2s ease',
-                  cursor: 'default',
+                  backgroundColor: isSelf ? 'rgba(99, 102, 241, 0.12)' : 'transparent',
+                  border: isSelf ? '1px solid rgba(99, 102, 241, 0.25)' : '1px solid transparent',
+                  transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={(e) => {
-                  if (!isSelf) e.currentTarget.style.backgroundColor = 'var(--bg-card-hover)';
+                  if (!isSelf) {
+                    e.currentTarget.style.backgroundColor = 'var(--bg-card-hover)';
+                    e.currentTarget.style.borderColor = 'var(--border-color)';
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  if (!isSelf) e.currentTarget.style.backgroundColor = 'transparent';
+                  if (!isSelf) {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.borderColor = 'transparent';
+                  }
                 }}
               >
                 <div style={{ position: 'relative' }}>
@@ -112,8 +160,9 @@ export const UserList = ({ onlineUsers = [], currentUsername, isOpen = false }) 
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontWeight: '600',
+                      fontWeight: '700',
                       fontSize: '0.85rem',
+                      boxShadow: 'var(--shadow-sm)',
                     }}
                   >
                     {getInitials(user.username)}
@@ -127,7 +176,8 @@ export const UserList = ({ onlineUsers = [], currentUsername, isOpen = false }) 
                       height: '10px',
                       borderRadius: '50%',
                       backgroundColor: 'var(--accent-green)',
-                      border: '2px solid var(--bg-card)',
+                      border: '2px solid #121826',
+                      boxShadow: '0 0 6px rgba(16, 185, 129, 0.6)',
                     }}
                   />
                 </div>
@@ -149,12 +199,12 @@ export const UserList = ({ onlineUsers = [], currentUsername, isOpen = false }) 
                     {isSelf && (
                       <span
                         style={{
-                          fontSize: '0.6875rem',
-                          color: 'var(--primary)',
-                          backgroundColor: 'var(--primary-light)',
-                          padding: '1px 5px',
-                          borderRadius: '4px',
-                          fontWeight: '600',
+                          fontSize: '0.65rem',
+                          color: '#FFFFFF',
+                          background: 'var(--primary-gradient)',
+                          padding: '1px 6px',
+                          borderRadius: 'var(--radius-full)',
+                          fontWeight: '700',
                         }}
                       >
                         You
@@ -164,13 +214,23 @@ export const UserList = ({ onlineUsers = [], currentUsername, isOpen = false }) 
                   <span
                     style={{
                       fontSize: '0.72rem',
-                      color: 'var(--accent-green)',
+                      color: 'var(--text-muted)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '4px',
+                      marginTop: '2px',
                     }}
                   >
-                    ● Active now
+                    <span
+                      style={{
+                        width: '5px',
+                        height: '5px',
+                        borderRadius: '50%',
+                        backgroundColor: 'var(--accent-green)',
+                        display: 'inline-block',
+                      }}
+                    />
+                    Online
                   </span>
                 </div>
               </div>

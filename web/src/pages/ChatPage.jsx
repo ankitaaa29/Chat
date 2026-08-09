@@ -8,7 +8,7 @@ import { TypingIndicator } from '../components/TypingIndicator';
 import { MessageInput } from '../components/MessageInput';
 import { disconnectSocket } from '../services/socket';
 
-export const ChatPage = ({ username, onLogout }) => {
+export const ChatPage = ({ username, token, onLogout }) => {
   const [roomId, setRoomId] = useState('general');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -33,22 +33,29 @@ export const ChatPage = ({ username, onLogout }) => {
 
   return (
     <div className="app-container">
+      {/* Ambient Animated Mesh Background */}
+      <div className="ambient-bg">
+        <div className="orb orb-1" />
+        <div className="orb orb-2" />
+      </div>
+
       <div className="chat-layout">
-        {/* Left Sidebar - Online Users */}
+        {/* Left Sidebar - Online Members Roster */}
         <UserList
           onlineUsers={onlineUsers}
           currentUsername={username}
           isOpen={sidebarOpen}
         />
 
-        {/* Main Chat Container */}
+        {/* Main Chat Stream Container */}
         <main
           style={{
             display: 'flex',
             flexDirection: 'column',
             height: '100%',
-            backgroundColor: 'var(--bg-dark)',
+            backgroundColor: 'transparent',
             position: 'relative',
+            zIndex: 2,
           }}
         >
           {/* Header */}
@@ -61,7 +68,7 @@ export const ChatPage = ({ username, onLogout }) => {
             onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
           />
 
-          {/* Message List Stream */}
+          {/* Message Stream */}
           <MessageList
             messages={messages}
             currentUsername={username}
@@ -70,10 +77,10 @@ export const ChatPage = ({ username, onLogout }) => {
             onRetry={reloadHistory}
           />
 
-          {/* Typing Indicator Bar */}
+          {/* Typing Bar */}
           <TypingIndicator typingUsers={typingUsers} />
 
-          {/* Bottom Message Input Form */}
+          {/* Input Controller */}
           <MessageInput
             onSendMessage={sendMessage}
             onInputChange={handleInputChange}

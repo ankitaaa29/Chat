@@ -39,12 +39,9 @@ export const uploadFileApi = async (file) => {
   const formData = new FormData();
   formData.append('file', file);
 
-  const token = localStorage.getItem('chat_token');
   const response = await fetch(`${API_URL}/api/upload`, {
     method: 'POST',
-    headers: {
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
+    headers: getAuthHeaders(),
     body: formData,
   });
 
@@ -55,36 +52,108 @@ export const uploadFileApi = async (file) => {
   return data;
 };
 
-export const fetchHealth = async () => {
-  const response = await fetch(`${API_URL}/api/health`);
-  if (!response.ok) throw new Error('Health check failed');
-  return response.json();
-};
+// -------------------------------------------------------------
+// CONTACT REQUEST & PRIVATE MESSAGING REST ENDPOINTS
+// -------------------------------------------------------------
 
-export const fetchChatHistory = async (roomId = 'general', limit = 100) => {
-  const response = await fetch(`${API_URL}/api/messages?roomId=${encodeURIComponent(roomId)}&limit=${limit}`, {
+export const searchUsersApi = async (username) => {
+  const response = await fetch(`${API_URL}/api/users/search?username=${encodeURIComponent(username)}`, {
     headers: getAuthHeaders(),
   });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || 'Failed to fetch chat history');
-  }
-  return response.json();
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || 'User search failed');
+  return data;
 };
 
-export const sendMessageApi = async ({ username, content, mediaUrl, mediaType, roomId = 'general' }) => {
-  const response = await fetch(`${API_URL}/api/messages`, {
+export const sendContactRequestApi = async (receiverId) => {
+  const response = await fetch(`${API_URL}/api/contact-requests`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       ...getAuthHeaders(),
     },
-    body: JSON.stringify({ username, content, mediaUrl, mediaType, roomId }),
+    body: JSON.stringify({ receiverId }),
   });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || 'Failed to send contact request');
+  return data;
+};
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || 'Failed to send message');
-  }
-  return response.json();
+export const fetchReceivedRequestsApi = async () => {
+  const response = await fetch(`${API_URL}/api/contact-requests/received`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || 'Failed to fetch incoming requests');
+  return data;
+};
+
+export const fetchSentRequestsApi = async () => {
+  const response = await fetch(`${API_URL}/api/contact-requests/sent`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || 'Failed to fetch sent requests');
+  return data;
+};
+
+export const acceptContactRequestApi = async (requestId) => {
+  const response = await fetch(`${API_URL}/api/contact-requests/${requestId}/accept`, {
+    method: 'PATCH',
+    headers: getAuthHeaders(),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || 'Failed to accept request');
+  return data;
+};
+
+export const rejectContactRequestApi = async (requestId) => {
+  const response = await fetch(`${API_URL}/api/contact-requests/${requestId}/reject`, {
+    method: 'PATCH',
+    headers: getAuthHeaders(),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || 'Failed to reject request');
+  return data;
+};
+
+export const fetchContactsApi = async () => {
+  const response = await fetch(`${API_URL}/api/contacts`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || 'Failed to fetch contacts');
+  return data;
+};
+
+export const fetchConversationsApi = async () => {
+  const response = await fetch(`${API_URL}/api/conversations`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || 'Failed to fetch conversations');
+  return data;
+};
+
+export const fetchConversationMessagesApi = async (conversationId) => {
+  const response = await fetch(`${API_URL}/api/conversations/${conversationId}/messages`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || 'Failed to fetch conversation messages');
+  return data;
+};
+
+export const sendConversationMessageApi = async (conversationId, { content, mediaUrl, mediaType }) => {
+  const response = await fetch(`${API_URL}/api/conversations/${conversationId}/messages`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify({ content, mediaUrl, mediaType }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || 'Failed to send message');
+  return data;
 };

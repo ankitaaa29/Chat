@@ -7,11 +7,13 @@ const healthRoutes = require('./routes/health.routes');
 const messageRoutes = require('./routes/message.routes');
 const authRoutes = require('./routes/auth.routes');
 const uploadRoutes = require('./routes/upload.routes');
+const contactRoutes = require('./routes/contact.routes');
+const conversationRoutes = require('./routes/conversation.routes');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 
 const app = express();
 
-// Security middleware (configured to allow loading images cross-origin)
+// Security middleware
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -22,7 +24,7 @@ app.use(
 app.use(
   cors({
     origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
@@ -42,6 +44,8 @@ if (process.env.NODE_ENV !== 'test') {
 // API Routes
 app.use('/api', authRoutes);
 app.use('/api', healthRoutes);
+app.use('/api', contactRoutes);
+app.use('/api', conversationRoutes);
 app.use('/api', messageRoutes);
 app.use('/api', uploadRoutes);
 

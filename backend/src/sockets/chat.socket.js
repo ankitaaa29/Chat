@@ -1,12 +1,12 @@
 const messageService = require('../services/message.service');
+const conversationService = require('../services/conversation.service');
 const userService = require('../services/user.service');
+const contactService = require('../services/contact.service');
 const logger = require('../utils/logger');
 const { setIO } = require('./socketManager');
 const { verifyToken } = require('../middleware/auth.middleware');
 
-// Store active connections: socketId -> { username, roomId }
 const activeSockets = new Map();
-// Store active usernames: username -> Set of socketIds
 const userSockets = new Map();
 
 const broadcastOnlineUsers = async (io) => {
@@ -21,7 +21,6 @@ const broadcastOnlineUsers = async (io) => {
 const setupChatSockets = (io) => {
   setIO(io);
 
-  // Optional Socket Middleware: Authenticate connections if auth token is present
   io.use((socket, next) => {
     const token = socket.handshake.auth && socket.handshake.auth.token;
     if (token) {
@@ -36,169 +35,147 @@ const setupChatSockets = (io) => {
   io.on('connection', (socket) => {
     logger.info(`Socket connected: ${socket.id} ${socket.user ? `(Authenticated user: ${socket.user.username})` : ''}`);
 
-    // Event: join_room
-    socket.on('join_room', async (data = {}) => {
-      const username = socket.user ? socket.user.username : data.username;
-      const roomId = data.roomId || 'general';
+    if (socket.user && socket.user.id) {
+      socket.join(`user:${socket.user.id}`);
+    }
 
-      if (!username || typeof username !== 'string') return;
+    // Event: register_user
+    socket.on('register_user', async (data = {}) => {
+      const username = socket.user ? socket.user.username : data.username;
+      const userId = socket.user ? socket.user.id : data.userId;
+
+      if (!username) return;
 
       const trimmedUser = username.trim();
-      const trimmedRoom = roomId.trim() || 'general';
-
-      // Clean up previous room mapping if socket was joined elsewhere
-      const existing = activeSockets.get(socket.id);
-      if (existing && existing.roomId !== trimmedRoom) {
-        socket.leave(existing.roomId);
-      }
-
-      // Track socket metadata
-      activeSockets.set(socket.id, { username: trimmedUser, roomId: trimmedRoom });
+      activeSockets.set(socket.id, { username: trimmedUser, userId });
 
       if (!userSockets.has(trimmedUser)) {
         userSockets.set(trimmedUser, new Set());
       }
       userSockets.get(trimmedUser).add(socket.id);
 
-      socket.join(trimmedRoom);
+      if (userId) {
+        socket.join(`user:${userId}`);
+      }
 
-      // Persist user online status in database
       await userService.upsertUser(trimmedUser, true);
-
-      logger.info(`User "${trimmedUser}" joined room "${trimmedRoom}" (socket: ${socket.id})`);
-
-      // Notify others in the room
-      socket.to(trimmedRoom).emit('user_joined', {
-        username: trimmedUser,
-        roomId: trimmedRoom,
-        timestamp: new Date().toISOString(),
-      });
-
-      // Send current online users list to all clients
       await broadcastOnlineUsers(io);
     });
 
-    // Event: send_message
+    // Event: join_conversation (Strict 1-to-1 conversation room authorization)
+    socket.on('join_conversation', async (data = {}) => {
+      const { conversationId } = data;
+      const userId = socket.user ? socket.user.id : data.userId;
+
+      if (!conversationId || !userId) {
+        return socket.emit('message_error', { message: 'conversationId and userId are required' });
+      }
+
+      try {
+        // Verify user is a participant in this conversation
+        const messages = await conversationService.getConversationMessages(userId, conversationId, 1);
+        socket.join(`conversation:${conversationId}`);
+        logger.info(`User ${userId} joined conversation socket room: conversation:${conversationId}`);
+      } catch (err) {
+        logger.warn(`Rejected socket join for user ${userId} to conversation ${conversationId}: ${err.message}`);
+        socket.emit('message_error', { message: err.message || 'Unauthorized conversation room access' });
+      }
+    });
+
+    // Event: leave_conversation
+    socket.on('leave_conversation', (data = {}) => {
+      const { conversationId } = data;
+      if (conversationId) {
+        socket.leave(`conversation:${conversationId}`);
+      }
+    });
+
+    // Event: send_message (1-to-1 private conversation message)
     socket.on('send_message', async (data = {}) => {
       try {
-        const username = socket.user ? socket.user.username : data.username;
-        const { content, mediaUrl, mediaType, roomId = 'general' } = data;
+        const userId = socket.user ? socket.user.id : data.userId;
+        const { conversationId, content, mediaUrl, mediaType } = data;
 
-        if (!username || (!content && !mediaUrl)) {
-          return socket.emit('error_message', { message: 'Username and content or media are required' });
+        if (!userId || !conversationId) {
+          return socket.emit('message_error', { message: 'Unauthorized: Authentication required' });
         }
 
-        const trimmedUser = username.trim();
-        const trimmedContent = content ? content.trim() : '';
-        const targetRoom = roomId.trim() || 'general';
-
-        // 1. MUST Persist message to PostgreSQL DB FIRST
-        const savedMessage = await messageService.createMessage({
-          username: trimmedUser,
-          content: trimmedContent,
-          mediaUrl: mediaUrl || null,
-          mediaType: mediaType || null,
-          roomId: targetRoom,
+        // STRICT AUTHORIZATION CHECK via conversationService
+        const savedMessage = await conversationService.createMessage(userId, conversationId, {
+          content: content ? content.trim() : '',
+          mediaUrl,
+          mediaType,
         });
 
-        // 2. Broadcast new_message to ALL connected clients in the room (including sender)
-        io.to(targetRoom).emit('new_message', savedMessage);
+        // Broadcast to conversation-specific room
+        io.to(`conversation:${conversationId}`).emit('new_message', savedMessage);
       } catch (err) {
-        logger.error('Socket send_message error:', err.message);
-        socket.emit('error_message', { message: 'Failed to deliver message' });
+        logger.error('Socket send_message authorization error:', err.message);
+        socket.emit('message_error', { message: err.message || 'You can only message accepted contacts.' });
       }
     });
 
     // Event: typing_start
     socket.on('typing_start', (data = {}) => {
-      const username = socket.user ? socket.user.username : data.username;
-      const roomId = data.roomId || 'general';
-      if (!username) return;
-      const targetRoom = roomId.trim() || 'general';
-      socket.to(targetRoom).emit('user_typing', {
-        username: username.trim(),
-        roomId: targetRoom,
-      });
+      const { conversationId, username } = data;
+      if (conversationId) {
+        socket.to(`conversation:${conversationId}`).emit('user_typing', {
+          username: username || (socket.user ? socket.user.username : 'User'),
+          conversationId,
+        });
+      }
     });
 
     // Event: typing_stop
     socket.on('typing_stop', (data = {}) => {
-      const username = socket.user ? socket.user.username : data.username;
-      const roomId = data.roomId || 'general';
-      if (!username) return;
-      const targetRoom = roomId.trim() || 'general';
-      socket.to(targetRoom).emit('user_stopped_typing', {
-        username: username.trim(),
-        roomId: targetRoom,
-      });
+      const { conversationId, username } = data;
+      if (conversationId) {
+        socket.to(`conversation:${conversationId}`).emit('user_stopped_typing', {
+          username: username || (socket.user ? socket.user.username : 'User'),
+          conversationId,
+        });
+      }
     });
 
     // -------------------------------------------------------------
     // WEBRTC VOICE & VIDEO CALL SIGNALING EVENTS
     // -------------------------------------------------------------
-
-    // 1. Initiate WebRTC Call
     socket.on('call_user', (data = {}) => {
-      const { userToCall, offer, callType = 'video', roomId = 'general' } = data;
+      const { userToCall, offer, callType = 'video', conversationId } = data;
       const callerName = socket.user ? socket.user.username : data.callerName;
 
-      logger.info(`WebRTC Call Initiated from "${callerName}" to "${userToCall || 'room'}" (${callType})`);
-
-      if (userToCall && userSockets.has(userToCall)) {
-        const targetSockets = userSockets.get(userToCall);
-        targetSockets.forEach((targetSocketId) => {
-          io.to(targetSocketId).emit('incoming_call', {
-            from: socket.id,
-            callerName,
-            offer,
-            callType,
-            roomId,
-          });
-        });
-      } else {
-        // Broadcast to channel members except caller
-        socket.to(roomId).emit('incoming_call', {
+      if (conversationId) {
+        socket.to(`conversation:${conversationId}`).emit('incoming_call', {
           from: socket.id,
           callerName,
           offer,
           callType,
-          roomId,
+          conversationId,
         });
       }
     });
 
-    // 2. Answer Incoming Call
     socket.on('answer_call', (data = {}) => {
       const { to, answer } = data;
-      logger.info(`WebRTC Call Answered by socket: ${socket.id} -> sending answer to ${to}`);
-      io.to(to).emit('call_accepted', {
-        from: socket.id,
-        answer,
-      });
+      io.to(to).emit('call_accepted', { from: socket.id, answer });
     });
 
-    // 3. Exchange ICE Candidates
     socket.on('ice_candidate', (data = {}) => {
       const { to, candidate } = data;
       if (to && candidate) {
-        io.to(to).emit('ice_candidate', {
-          from: socket.id,
-          candidate,
-        });
+        io.to(to).emit('ice_candidate', { from: socket.id, candidate });
       }
     });
 
-    // 4. End Call / Hang Up
     socket.on('end_call', (data = {}) => {
-      const { to, roomId } = data;
+      const { to, conversationId } = data;
       if (to) {
         io.to(to).emit('call_ended', { from: socket.id });
-      } else if (roomId) {
-        socket.to(roomId).emit('call_ended', { from: socket.id });
+      } else if (conversationId) {
+        socket.to(`conversation:${conversationId}`).emit('call_ended', { from: socket.id });
       }
     });
 
-    // 5. Reject Call
     socket.on('reject_call', (data = {}) => {
       const { to } = data;
       if (to) {
@@ -208,29 +185,18 @@ const setupChatSockets = (io) => {
 
     // Event: disconnect
     socket.on('disconnect', async () => {
-      logger.info(`Socket disconnected: ${socket.id}`);
-
       const session = activeSockets.get(socket.id);
       if (session) {
-        const { username, roomId } = session;
+        const { username } = session;
         activeSockets.delete(socket.id);
 
         if (userSockets.has(username)) {
           const socketsSet = userSockets.get(username);
           socketsSet.delete(socket.id);
 
-          // If no active sockets remain for this username, set offline in DB
           if (socketsSet.size === 0) {
             userSockets.delete(username);
             await userService.setUserOffline(username);
-
-            // Broadcast user_left and updated online_users
-            socket.to(roomId).emit('user_left', {
-              username,
-              roomId,
-              timestamp: new Date().toISOString(),
-            });
-
             await broadcastOnlineUsers(io);
           }
         }

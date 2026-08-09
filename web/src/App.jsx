@@ -1,58 +1,74 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
-import { ChatPage } from './pages/ChatPage';
+import { DashboardPage } from './pages/DashboardPage';
 
 export function App() {
-  const [authView, setAuthView] = useState('login'); // 'login' | 'register'
-
-  const [token, setToken] = useState(() => {
-    return localStorage.getItem('chat_token') || '';
-  });
-
+  const [token, setToken] = useState(localStorage.getItem('chat_token') || null);
   const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem('chat_user');
-    try {
-      return stored ? JSON.parse(stored) : null;
-    } catch (e) {
-      return null;
-    }
+    const savedUser = localStorage.getItem('chat_user');
+    return savedUser ? JSON.parse(savedUser) : null;
   });
+  const [view, setView] = useState(token ? 'dashboard' : 'login');
 
-  const handleAuthSuccess = (newToken, newUser) => {
+  useEffect(() => {
+    if (token) {
+      setView('dashboard');
+    } else {
+      setView('login');
+    }
+  }, [token]);
+
+  const handleLoginSuccess = (newToken, userData) => {
     localStorage.setItem('chat_token', newToken);
-    localStorage.setItem('chat_user', JSON.stringify(newUser));
+    localStorage.setItem('chat_user', JSON.stringify(userData));
     setToken(newToken);
-    setUser(newUser);
+    setUser(userData);
+    setView('dashboard');
+  };
+
+  const handleRegisterSuccess = (newToken, userData) => {
+    localStorage.setItem('chat_token', newToken);
+    localStorage.setItem('chat_user', JSON.stringify(userData));
+    setToken(newToken);
+    setUser(userData);
+    setView('dashboard');
   };
 
   const handleLogout = () => {
     localStorage.removeItem('chat_token');
     localStorage.removeItem('chat_user');
-    localStorage.removeItem('chat_username');
-    setToken('');
+    setToken(null);
     setUser(null);
-    setAuthView('login');
+    setView('login');
   };
 
-  if (!token || !user) {
-    if (authView === 'register') {
-      return (
-        <RegisterPage
-          onRegisterSuccess={handleAuthSuccess}
-          onSwitchToLogin={() => setAuthView('login')}
-        />
-      );
-    }
+  if (view === 'login') {
     return (
       <LoginPage
-        onLoginSuccess={handleAuthSuccess}
-        onSwitchToRegister={() => setAuthView('register')}
+        onLoginSuccess={handleLoginSuccess}
+        onSwitchToRegister={() => setView('register')}
       />
     );
   }
 
-  return <ChatPage username={user.username} user={user} token={token} onLogout={handleLogout} />;
+  if (view === 'register') {
+    return (
+      <RegisterPage
+        onRegisterSuccess={handleRegisterSuccess}
+        onSwitchToLogin={() => setView('login')}
+      />
+    );
+  }
+
+  return (
+    <DashboardPage
+      username={user ? user.username : 'User'}
+      user={user}
+      token={token}
+      onLogout={handleLogout}
+    />
+  );
 }
 
 export default App;

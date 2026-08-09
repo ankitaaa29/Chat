@@ -17,4 +17,4 @@ COPY . .
 
 EXPOSE 5000
 
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss && npm start"]
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss --force-reset && npm start"]

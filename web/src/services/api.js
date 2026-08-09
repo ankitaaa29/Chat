@@ -7,18 +7,30 @@ const getAuthHeaders = () => {
   };
 };
 
+const handleResponse = async (response) => {
+  const data = await response.json().catch(() => ({}));
+
+  if (response.status === 401) {
+    localStorage.removeItem('chat_token');
+    localStorage.removeItem('chat_user');
+    window.location.reload();
+    throw new Error(data.message || 'Session expired. Please log in again.');
+  }
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Request failed');
+  }
+
+  return data;
+};
+
 export const registerApi = async ({ username, email, password }) => {
   const response = await fetch(`${API_URL}/api/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, email, password }),
   });
-
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(data.message || 'Registration failed');
-  }
-  return data;
+  return handleResponse(response);
 };
 
 export const loginApi = async ({ identifier, password }) => {
@@ -27,12 +39,7 @@ export const loginApi = async ({ identifier, password }) => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ identifier, password }),
   });
-
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(data.message || 'Login failed');
-  }
-  return data;
+  return handleResponse(response);
 };
 
 export const uploadFileApi = async (file) => {
@@ -44,12 +51,7 @@ export const uploadFileApi = async (file) => {
     headers: getAuthHeaders(),
     body: formData,
   });
-
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(data.message || 'Failed to upload photo');
-  }
-  return data;
+  return handleResponse(response);
 };
 
 // -------------------------------------------------------------
@@ -60,9 +62,7 @@ export const searchUsersApi = async (username) => {
   const response = await fetch(`${API_URL}/api/users/search?username=${encodeURIComponent(username)}`, {
     headers: getAuthHeaders(),
   });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.message || 'User search failed');
-  return data;
+  return handleResponse(response);
 };
 
 export const sendContactRequestApi = async (receiverId) => {
@@ -74,27 +74,21 @@ export const sendContactRequestApi = async (receiverId) => {
     },
     body: JSON.stringify({ receiverId }),
   });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.message || 'Failed to send contact request');
-  return data;
+  return handleResponse(response);
 };
 
 export const fetchReceivedRequestsApi = async () => {
   const response = await fetch(`${API_URL}/api/contact-requests/received`, {
     headers: getAuthHeaders(),
   });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.message || 'Failed to fetch incoming requests');
-  return data;
+  return handleResponse(response);
 };
 
 export const fetchSentRequestsApi = async () => {
   const response = await fetch(`${API_URL}/api/contact-requests/sent`, {
     headers: getAuthHeaders(),
   });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.message || 'Failed to fetch sent requests');
-  return data;
+  return handleResponse(response);
 };
 
 export const acceptContactRequestApi = async (requestId) => {
@@ -102,9 +96,7 @@ export const acceptContactRequestApi = async (requestId) => {
     method: 'PATCH',
     headers: getAuthHeaders(),
   });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.message || 'Failed to accept request');
-  return data;
+  return handleResponse(response);
 };
 
 export const rejectContactRequestApi = async (requestId) => {
@@ -112,36 +104,28 @@ export const rejectContactRequestApi = async (requestId) => {
     method: 'PATCH',
     headers: getAuthHeaders(),
   });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.message || 'Failed to reject request');
-  return data;
+  return handleResponse(response);
 };
 
 export const fetchContactsApi = async () => {
   const response = await fetch(`${API_URL}/api/contacts`, {
     headers: getAuthHeaders(),
   });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.message || 'Failed to fetch contacts');
-  return data;
+  return handleResponse(response);
 };
 
 export const fetchConversationsApi = async () => {
   const response = await fetch(`${API_URL}/api/conversations`, {
     headers: getAuthHeaders(),
   });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.message || 'Failed to fetch conversations');
-  return data;
+  return handleResponse(response);
 };
 
 export const fetchConversationMessagesApi = async (conversationId) => {
   const response = await fetch(`${API_URL}/api/conversations/${conversationId}/messages`, {
     headers: getAuthHeaders(),
   });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.message || 'Failed to fetch conversation messages');
-  return data;
+  return handleResponse(response);
 };
 
 export const sendConversationMessageApi = async (conversationId, { content, mediaUrl, mediaType }) => {
@@ -153,7 +137,5 @@ export const sendConversationMessageApi = async (conversationId, { content, medi
     },
     body: JSON.stringify({ content, mediaUrl, mediaType }),
   });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.message || 'Failed to send message');
-  return data;
+  return handleResponse(response);
 };

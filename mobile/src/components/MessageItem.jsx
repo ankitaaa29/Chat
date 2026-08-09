@@ -4,9 +4,15 @@ import { formatMobileTime, getMobileInitials, getMobileAvatarColor } from '../ut
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
 
-export const MessageItem = ({ message, currentUsername }) => {
-  const isSelf = message.username === currentUsername;
-  const avatarColor = getMobileAvatarColor(message.username);
+export const MessageItem = ({ message, currentUsername, currentUserId }) => {
+  const senderUsername = message.sender?.username || message.username || 'User';
+  const senderId = message.senderId || message.sender?.id;
+
+  const isSelf =
+    (currentUserId && senderId === currentUserId) ||
+    (currentUsername && senderUsername.toLowerCase() === currentUsername.toLowerCase());
+
+  const avatarColor = getMobileAvatarColor(senderUsername);
 
   const mediaFullUrl = message.mediaUrl
     ? message.mediaUrl.startsWith('http')
@@ -18,12 +24,12 @@ export const MessageItem = ({ message, currentUsername }) => {
     <View style={[styles.container, isSelf ? styles.selfContainer : styles.otherContainer]}>
       {!isSelf && (
         <View style={[styles.avatar, { backgroundColor: avatarColor }]}>
-          <Text style={styles.avatarText}>{getMobileInitials(message.username)}</Text>
+          <Text style={styles.avatarText}>{getMobileInitials(senderUsername)}</Text>
         </View>
       )}
 
       <View style={[styles.wrapper, isSelf ? styles.alignRight : styles.alignLeft]}>
-        {!isSelf && <Text style={styles.usernameText}>{message.username}</Text>}
+        {!isSelf && <Text style={styles.usernameText}>{senderUsername}</Text>}
 
         <View style={[styles.bubble, isSelf ? styles.selfBubble : styles.otherBubble]}>
           {mediaFullUrl && (

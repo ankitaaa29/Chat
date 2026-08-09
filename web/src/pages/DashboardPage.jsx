@@ -146,16 +146,31 @@ export const DashboardPage = ({ username, user, token, onLogout }) => {
       loadDashboardData();
     };
 
+    // Socket Event for Incoming Voice/Video Calls
+    const handleIncomingCall = ({ from, callerName, offer, callType, conversationId }) => {
+      setCallState({
+        isCalling: false,
+        isReceivingCall: true,
+        callerName,
+        callType,
+        callerSocketId: from,
+        roomId: conversationId,
+        offer,
+      });
+    };
+
     socket.on('contact_request_received', handleContactRequestReceived);
     socket.on('contact_request_accepted', handleContactRequestAccepted);
     socket.on('contact_request_rejected', handleContactRequestRejected);
     socket.on('new_message', handleNewMessage);
+    socket.on('incoming_call', handleIncomingCall);
 
     return () => {
       socket.off('contact_request_received', handleContactRequestReceived);
       socket.off('contact_request_accepted', handleContactRequestAccepted);
       socket.off('contact_request_rejected', handleContactRequestRejected);
       socket.off('new_message', handleNewMessage);
+      socket.off('incoming_call', handleIncomingCall);
     };
   }, [username, user, activeConversation, loadDashboardData]);
 
@@ -245,19 +260,13 @@ export const DashboardPage = ({ username, user, token, onLogout }) => {
     if (!activeConversation) return;
 
     try {
-      if (socket.connected) {
-        socket.emit('send_message', {
-          conversationId: activeConversation.id,
-          userId: user ? user.id : null,
-          content,
-          mediaUrl,
-          mediaType,
+      // Call REST API: saves message in DB & automatically broadcasts socket event 'new_message'
+      const res = await sendConversationMessageApi(activeConversation.id, { content, mediaUrl, mediaType });
+      if (res && res.data) {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === res.data.id)) return prev;
+          return [...prev, res.data];
         });
-      } else {
-        const res = await sendConversationMessageApi(activeConversation.id, { content, mediaUrl, mediaType });
-        if (res && res.data) {
-          setMessages((prev) => [...prev, res.data]);
-        }
       }
     } catch (err) {
       alert(err.message || 'Failed to send message.');
@@ -339,20 +348,21 @@ export const DashboardPage = ({ username, user, token, onLogout }) => {
       <main
         style={{
           flex: 1,
-          height: '100%',
+          height: '100vh',
+          maxHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
           backgroundColor: 'transparent',
           position: 'relative',
           zIndex: 2,
-          overflowY: 'auto',
+          overflow: 'hidden',
         }}
       >
         {/* ------------------------------------------------------------- */}
         {/* VIEW 1: HOME DASHBOARD */}
         {/* ------------------------------------------------------------- */}
         {activeTab === 'home' && (
-          <div style={{ padding: '36px 40px', maxWidth: '1000px' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '36px 40px', maxWidth: '1000px', width: '100%' }}>
             <div style={{ marginBottom: '32px' }}>
               <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '2rem', fontWeight: '800', color: 'var(--text-main)' }}>
                 Welcome back, {username} 👋
@@ -452,7 +462,7 @@ export const DashboardPage = ({ username, user, token, onLogout }) => {
         {/* VIEW 2: SEARCH USERS */}
         {/* ------------------------------------------------------------- */}
         {activeTab === 'search' && (
-          <div style={{ padding: '36px 40px', maxWidth: '850px' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '36px 40px', maxWidth: '850px', width: '100%' }}>
             <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.75rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '8px' }}>
               Find Users
             </h1>
@@ -616,7 +626,7 @@ export const DashboardPage = ({ username, user, token, onLogout }) => {
         {/* VIEW 3: INCOMING & SENT REQUESTS */}
         {/* ------------------------------------------------------------- */}
         {activeTab === 'requests' && (
-          <div style={{ padding: '36px 40px', maxWidth: '850px' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '36px 40px', maxWidth: '850px', width: '100%' }}>
             <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.75rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '8px' }}>
               Contact Requests
             </h1>
@@ -722,7 +732,7 @@ export const DashboardPage = ({ username, user, token, onLogout }) => {
         {/* VIEW 4: ACCEPTED CONTACTS ROSTER */}
         {/* ------------------------------------------------------------- */}
         {activeTab === 'contacts' && (
-          <div style={{ padding: '36px 40px', maxWidth: '850px' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '36px 40px', maxWidth: '850px', width: '100%' }}>
             <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.75rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '8px' }}>
               Contacts
             </h1>
@@ -819,7 +829,7 @@ export const DashboardPage = ({ username, user, token, onLogout }) => {
         {/* VIEW 5: PRIVATE 1-TO-1 CHATS */}
         {/* ------------------------------------------------------------- */}
         {activeTab === 'chats' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', height: '100%' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', height: '100%', minHeight: 0, overflow: 'hidden' }}>
             {/* Conversations List Panel */}
             <div
               className="glass-panel"
@@ -905,7 +915,7 @@ export const DashboardPage = ({ username, user, token, onLogout }) => {
 
             {/* Active 1-to-1 Chat Stream Window */}
             {activeConversation ? (
-              <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: 'transparent' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, overflow: 'hidden', backgroundColor: 'transparent' }}>
                 {/* Header */}
                 <div
                   style={{
@@ -945,13 +955,13 @@ export const DashboardPage = ({ username, user, token, onLogout }) => {
 
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <button
-                      onClick={() => setCallState({ isCalling: true, callType: 'audio', userToCall: activeConversation.otherUser ? activeConversation.otherUser.username : null })}
+                      onClick={() => setCallState({ isCalling: true, callType: 'audio', userToCall: activeConversation.otherUser ? activeConversation.otherUser.username : null, roomId: activeConversation.id })}
                       style={{ padding: '8px', borderRadius: 'var(--radius-md)', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', color: '#FFFFFF', cursor: 'pointer' }}
                     >
                       <Phone size={18} />
                     </button>
                     <button
-                      onClick={() => setCallState({ isCalling: true, callType: 'video', userToCall: activeConversation.otherUser ? activeConversation.otherUser.username : null })}
+                      onClick={() => setCallState({ isCalling: true, callType: 'video', userToCall: activeConversation.otherUser ? activeConversation.otherUser.username : null, roomId: activeConversation.id })}
                       style={{ padding: '8px', borderRadius: 'var(--radius-md)', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', color: '#FFFFFF', cursor: 'pointer' }}
                     >
                       <Video size={18} />
@@ -963,6 +973,7 @@ export const DashboardPage = ({ username, user, token, onLogout }) => {
                 <MessageList
                   messages={messages}
                   currentUsername={username}
+                  currentUserId={user?.id}
                   loading={loadingMessages}
                 />
 
@@ -985,7 +996,7 @@ export const DashboardPage = ({ username, user, token, onLogout }) => {
         {/* VIEW 6: SETTINGS & PROFILE CUSTOMIZATION */}
         {/* ------------------------------------------------------------- */}
         {activeTab === 'settings' && (
-          <div style={{ padding: '36px 40px', maxWidth: '850px' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '36px 40px', maxWidth: '850px', width: '100%' }}>
             <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.75rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '8px' }}>
               Account Settings
             </h1>

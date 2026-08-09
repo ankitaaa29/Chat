@@ -8,6 +8,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 export const MessageList = ({
   messages = [],
   currentUsername,
+  currentUserId,
   loading = false,
   error = null,
   onRetry,
@@ -155,6 +156,7 @@ export const MessageList = ({
       onScroll={handleScroll}
       style={{
         flex: 1,
+        minHeight: 0,
         overflowY: 'auto',
         padding: '20px 24px',
         display: 'flex',
@@ -169,12 +171,19 @@ export const MessageList = ({
       />
 
       {messages.map((msg, index) => {
-        const isSelf = msg.username === currentUsername;
-        const avatarColor = getUserAvatarColor(msg.username);
+        const senderUsername = msg.sender?.username || msg.username || 'User';
+        const senderId = msg.senderId || msg.sender?.id;
+
+        const isSelf =
+          (currentUserId && senderId === currentUserId) ||
+          (currentUsername && senderUsername.toLowerCase() === currentUsername.toLowerCase());
+
+        const avatarColor = getUserAvatarColor(senderUsername);
         const isLiked = likedMessages.has(msg.id);
 
         const prevMsg = messages[index - 1];
-        const isSequence = prevMsg && prevMsg.username === msg.username;
+        const prevSender = prevMsg ? prevMsg.sender?.username || prevMsg.username : null;
+        const isSequence = prevSender === senderUsername;
 
         const mediaFullUrl = msg.mediaUrl
           ? msg.mediaUrl.startsWith('http')
@@ -213,7 +222,7 @@ export const MessageList = ({
                   boxShadow: 'var(--shadow-sm)',
                 }}
               >
-                {getInitials(msg.username)}
+                {getInitials(senderUsername)}
               </div>
             )}
 
@@ -238,7 +247,7 @@ export const MessageList = ({
                     marginLeft: '4px',
                   }}
                 >
-                  {msg.username}
+                  {senderUsername}
                 </span>
               )}
 

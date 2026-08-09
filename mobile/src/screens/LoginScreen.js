@@ -9,14 +9,17 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
-import { loginMobileApi } from '../services/api';
+import { loginMobileApi, getBackendUrl, setCustomBackendUrl } from '../services/api';
 
 export const LoginScreen = ({ onLoginSuccess, onSwitchToRegister }) => {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showServerConfig, setShowServerConfig] = useState(false);
+  const [customServerUrl, setCustomServerUrl] = useState(getBackendUrl());
 
   const handleSubmit = async () => {
     const trimmed = identifier.trim();
@@ -33,10 +36,22 @@ export const LoginScreen = ({ onLoginSuccess, onSwitchToRegister }) => {
         onLoginSuccess(res.data.token, res.data.user);
       }
     } catch (err) {
-      setError(err.message || 'Authentication failed');
+      if (err.message && err.message.includes('Network request failed')) {
+        setError('Network request failed. Make sure phone and PC are on same Wi-Fi.');
+        setShowServerConfig(true);
+      } else {
+        setError(err.message || 'Authentication failed');
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleApplyServerUrl = (urlToSet) => {
+    const target = urlToSet || customServerUrl;
+    setCustomBackendUrl(target);
+    setCustomServerUrl(target);
+    Alert.alert('Server IP Updated', `Connecting to: ${target}`);
   };
 
   return (
@@ -57,6 +72,49 @@ export const LoginScreen = ({ onLoginSuccess, onSwitchToRegister }) => {
 
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
+          {/* Network Connection Helper & IP Configurator */}
+          {(showServerConfig || (error && error.includes('Network'))) && (
+            <View style={styles.serverConfigPanel}>
+              <Text style={styles.serverConfigTitle}>⚙ Backend Connection Settings</Text>
+              <Text style={styles.serverConfigSub}>
+                Connecting to: <Text style={styles.boldText}>{customServerUrl}</Text>
+              </Text>
+
+              <View style={styles.presetRow}>
+                <TouchableOpacity
+                  style={styles.presetChip}
+                  onPress={() => handleApplyServerUrl('http://192.168.1.5:5000')}
+                >
+                  <Text style={styles.presetChipText}>PC Wi-Fi (192.168.1.5)</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.presetChip}
+                  onPress={() => handleApplyServerUrl('http://10.0.2.2:5000')}
+                >
+                  <Text style={styles.presetChipText}>Emulator (10.0.2.2)</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.customIpRow}>
+                <TextInput
+                  style={styles.customIpInput}
+                  value={customServerUrl}
+                  onChangeText={setCustomServerUrl}
+                  placeholder="e.g. http://192.168.1.5:5000"
+                  placeholderTextColor="#64748B"
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity
+                  style={styles.applyBtn}
+                  onPress={() => handleApplyServerUrl()}
+                >
+                  <Text style={styles.applyBtnText}>Apply</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
           <View style={styles.inputGroup}>
             <Text style={styles.label}>EMAIL OR USERNAME</Text>
             <TextInput
@@ -66,7 +124,7 @@ export const LoginScreen = ({ onLoginSuccess, onSwitchToRegister }) => {
                 setIdentifier(text);
                 if (error) setError('');
               }}
-              placeholder="e.g. rahul@example.com or Rahul"
+              placeholder="e.g. ankita@gmail.com or Ankita"
               placeholderTextColor="#64748B"
               autoCapitalize="none"
               autoCorrect={false}
@@ -99,6 +157,15 @@ export const LoginScreen = ({ onLoginSuccess, onSwitchToRegister }) => {
             ) : (
               <Text style={styles.buttonText}>Sign In</Text>
             )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.toggleServerBtn}
+            onPress={() => setShowServerConfig((prev) => !prev)}
+          >
+            <Text style={styles.toggleServerText}>
+              {showServerConfig ? 'Hide Server IP Settings' : '⚙ Configure Server IP'}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.switchButton} onPress={onSwitchToRegister}>
@@ -164,7 +231,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#94A3B8',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 18,
     lineHeight: 18,
   },
   inputGroup: {
@@ -191,9 +258,81 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: '#EF4444',
-    fontSize: 12,
+    fontSize: 13,
+    fontWeight: '600',
     marginBottom: 12,
     textAlign: 'center',
+  },
+  serverConfigPanel: {
+    width: '100%',
+    backgroundColor: '#121930',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(139, 92, 246, 0.4)',
+  },
+  serverConfigTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#A855F7',
+    marginBottom: 4,
+  },
+  serverConfigSub: {
+    fontSize: 11,
+    color: '#94A3B8',
+    marginBottom: 10,
+  },
+  boldText: {
+    color: '#F8FAFC',
+    fontWeight: '700',
+  },
+  presetRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 10,
+  },
+  presetChip: {
+    flex: 1,
+    backgroundColor: 'rgba(139, 92, 246, 0.2)',
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(139, 92, 246, 0.3)',
+  },
+  presetChipText: {
+    color: '#F8FAFC',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  customIpRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  customIpInput: {
+    flex: 1,
+    height: 38,
+    backgroundColor: '#0D1224',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    color: '#F8FAFC',
+    fontSize: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  applyBtn: {
+    backgroundColor: '#8B5CF6',
+    paddingHorizontal: 14,
+    height: 38,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  applyBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
   },
   button: {
     width: '100%',
@@ -214,8 +353,17 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
   },
+  toggleServerBtn: {
+    marginTop: 12,
+    paddingVertical: 4,
+  },
+  toggleServerText: {
+    color: '#8B5CF6',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   switchButton: {
-    marginTop: 20,
+    marginTop: 16,
   },
   switchText: {
     color: '#94A3B8',

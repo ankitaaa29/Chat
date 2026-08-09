@@ -144,14 +144,30 @@ const setupChatSockets = (io) => {
       const { userToCall, offer, callType = 'video', conversationId } = data;
       const callerName = socket.user ? socket.user.username : data.callerName;
 
-      if (conversationId) {
-        socket.to(`conversation:${conversationId}`).emit('incoming_call', {
-          from: socket.id,
-          callerName,
-          offer,
-          callType,
-          conversationId,
+      logger.info(`Call initiated by ${callerName} to target ${userToCall || conversationId}`);
+
+      const payload = {
+        from: socket.id,
+        callerName,
+        offer,
+        callType,
+        conversationId,
+        userToCall,
+      };
+
+      // 1. Direct delivery to recipient's active socket connections
+      if (userToCall && userSockets.has(userToCall)) {
+        const recipientSockets = userSockets.get(userToCall);
+        recipientSockets.forEach((sockId) => {
+          if (sockId !== socket.id) {
+            io.to(sockId).emit('incoming_call', payload);
+          }
         });
+      }
+
+      // 2. Room broadcast fallback
+      if (conversationId) {
+        socket.to(`conversation:${conversationId}`).emit('incoming_call', payload);
       }
     });
 

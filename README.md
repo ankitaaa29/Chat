@@ -2,6 +2,9 @@
 
 PulseChat is a full-stack, enterprise-grade real-time chat platform built as a clean monorepo. It features a modern **React + Vite** web client, a **React Native + Expo SDK 52** mobile application, a **Node.js + Express** backend API powered by **Socket.io**, and a **PostgreSQL** relational database managed via **Prisma ORM**.
 
+> 🚀 **Live Deployed API URL**: [`https://pulsechat-backend-fgzm.onrender.com`](https://pulsechat-backend-fgzm.onrender.com)  
+> 🏥 **Live Health Check**: [`https://pulsechat-backend-fgzm.onrender.com/api/health`](https://pulsechat-backend-fgzm.onrender.com/api/health)
+
 ---
 
 ## 🏗 Architecture
@@ -313,8 +316,8 @@ npx expo start
    - Click **Create Web Service**.
 
 3. **Step 3: Access Live Backend API URL**
-   - Render will generate your live URL (e.g. `https://chat-backend-production.onrender.com`).
-   - Test health check: `https://chat-backend-production.onrender.com/api/health`
+   - **Live Production URL**: [`https://pulsechat-backend-fgzm.onrender.com`](https://pulsechat-backend-fgzm.onrender.com)
+   - **Live Health Check**: [`https://pulsechat-backend-fgzm.onrender.com/api/health`](https://pulsechat-backend-fgzm.onrender.com/api/health)
 
 ---
 

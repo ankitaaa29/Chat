@@ -41,6 +41,15 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
 
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    status: 'online',
+    message: 'PulseChat Real-Time Backend API is live!',
+    health: '/api/health',
+  });
+});
+
 // API Routes
 app.use('/api', authRoutes);
 app.use('/api', healthRoutes);

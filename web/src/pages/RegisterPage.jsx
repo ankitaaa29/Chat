@@ -158,7 +158,7 @@ export const RegisterPage = ({ onRegisterSuccess, onSwitchToLogin }) => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} autoComplete="off">
           <div style={{ marginBottom: '16px' }}>
             <label
               style={{
@@ -175,9 +175,11 @@ export const RegisterPage = ({ onRegisterSuccess, onSwitchToLogin }) => {
             </label>
             <input
               type="text"
+              name="reg_username_field"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="e.g. Ankita"
+              placeholder="Enter desired username"
+              autoComplete="off"
               required
               className="glass-input"
               style={{
@@ -205,9 +207,11 @@ export const RegisterPage = ({ onRegisterSuccess, onSwitchToLogin }) => {
             </label>
             <input
               type="email"
+              name="reg_email_field"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="ankita@example.com"
+              placeholder="Enter email address"
+              autoComplete="off"
               required
               className="glass-input"
               style={{
@@ -235,9 +239,11 @@ export const RegisterPage = ({ onRegisterSuccess, onSwitchToLogin }) => {
             </label>
             <input
               type="password"
+              name="reg_password_field"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              placeholder="Enter password"
+              autoComplete="new-password"
               required
               className="glass-input"
               style={{
@@ -265,9 +271,11 @@ export const RegisterPage = ({ onRegisterSuccess, onSwitchToLogin }) => {
             </label>
             <input
               type="password"
+              name="reg_confirm_password_field"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="••••••••"
+              placeholder="Confirm password"
+              autoComplete="new-password"
               required
               className="glass-input"
               style={{

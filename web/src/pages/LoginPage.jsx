@@ -130,7 +130,7 @@ export const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} autoComplete="off">
           <div style={{ marginBottom: '18px' }}>
             <label
               style={{
@@ -147,11 +147,12 @@ export const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
             </label>
             <input
               type="text"
+              name="user_identifier_field"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
-              placeholder="e.g. ankita@example.com or Ankita"
+              placeholder="Enter email or username"
+              autoComplete="off"
               required
-              autoFocus
               className="glass-input"
               style={{
                 width: '100%',
@@ -178,9 +179,11 @@ export const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
             </label>
             <input
               type="password"
+              name="user_password_field"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              placeholder="Enter password"
+              autoComplete="new-password"
               required
               className="glass-input"
               style={{
@@ -212,12 +215,6 @@ export const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
               boxShadow: 'var(--shadow-aurora)',
               opacity: loading ? 0.75 : 1,
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
-            onMouseEnter={(e) => {
-              if (!loading) e.currentTarget.style.transform = 'translateY(-1px)';
-            }}
-            onMouseLeave={(e) => {
-              if (!loading) e.currentTarget.style.transform = 'translateY(0)';
             }}
           >
             <LogIn size={18} />

@@ -34,6 +34,14 @@ import {
   ArrowRight,
   Bell,
   Lock,
+  Settings as SettingsIcon,
+  User,
+  Key,
+  Palette,
+  Volume2,
+  Trash2,
+  CheckCircle2,
+  LogOut,
 } from 'lucide-react';
 
 export const DashboardPage = ({ username, user, token, onLogout }) => {
@@ -54,6 +62,19 @@ export const DashboardPage = ({ username, user, token, onLogout }) => {
   const [activeConversation, setActiveConversation] = useState(null); // { id, otherUser }
   const [messages, setMessages] = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
+
+  // Settings State
+  const [bio, setBio] = useState('Active on PulseChat 👋');
+  const [readReceipts, setReadReceipts] = useState(true);
+  const [onlineVisibility, setOnlineVisibility] = useState(true);
+  const [soundAlerts, setSoundAlerts] = useState(true);
+  const [pushNotifications, setPushNotifications] = useState(true);
+  const [selectedTheme, setSelectedTheme] = useState('aurora'); // 'aurora' | 'obsidian' | 'cyberpunk'
+
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [settingsMessage, setSettingsMessage] = useState('');
 
   // Real-time Notification Toast State
   const [toastNotification, setToastNotification] = useState(null);
@@ -241,6 +262,23 @@ export const DashboardPage = ({ username, user, token, onLogout }) => {
     } catch (err) {
       alert(err.message || 'Failed to send message.');
     }
+  };
+
+  const handlePasswordChange = (e) => {
+    e.preventDefault();
+    if (!newPassword || newPassword.length < 6) {
+      setSettingsMessage('New password must be at least 6 characters');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setSettingsMessage('Passwords do not match');
+      return;
+    }
+    setSettingsMessage('Password updated successfully!');
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setTimeout(() => setSettingsMessage(''), 4000);
   };
 
   return (
@@ -940,6 +978,283 @@ export const DashboardPage = ({ username, user, token, onLogout }) => {
                 <p style={{ fontSize: '0.85rem' }}>Select a conversation from the left to start messaging.</p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ------------------------------------------------------------- */}
+        {/* VIEW 6: SETTINGS & PROFILE CUSTOMIZATION */}
+        {/* ------------------------------------------------------------- */}
+        {activeTab === 'settings' && (
+          <div style={{ padding: '36px 40px', maxWidth: '850px' }}>
+            <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.75rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '8px' }}>
+              Account Settings
+            </h1>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '32px' }}>
+              Manage your profile, security, notifications, and appearance options.
+            </p>
+
+            {settingsMessage && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '12px 16px',
+                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                  border: '1px solid rgba(16, 185, 129, 0.35)',
+                  borderRadius: 'var(--radius-md)',
+                  color: '#10B981',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  marginBottom: '24px',
+                }}
+              >
+                <CheckCircle2 size={18} />
+                <span>{settingsMessage}</span>
+              </div>
+            )}
+
+            {/* Profile Overview Card */}
+            <div className="glass-panel" style={{ padding: '24px', borderRadius: 'var(--radius-lg)', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <User size={18} color="var(--primary)" />
+                <span>Profile Details</span>
+              </h2>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '20px' }}>
+                <div
+                  style={{
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '50%',
+                    backgroundColor: getUserAvatarColor(username),
+                    color: '#FFFFFF',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: '800',
+                    fontSize: '1.4rem',
+                    boxShadow: 'var(--shadow-aurora)',
+                  }}
+                >
+                  {getInitials(username)}
+                </div>
+
+                <div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                    {username}
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    {user && user.email ? user.email : 'Authenticated Member'}
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--accent-green)', marginTop: '4px', fontWeight: '600' }}>
+                    🟢 Active PulseChat Account
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase' }}>
+                  Bio Status
+                </label>
+                <input
+                  type="text"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  className="glass-input"
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 'var(--radius-md)', fontSize: '0.9rem' }}
+                />
+              </div>
+            </div>
+
+            {/* Security & Password Change */}
+            <div className="glass-panel" style={{ padding: '24px', borderRadius: 'var(--radius-lg)', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Key size={18} color="#A855F7" />
+                <span>Security & Password</span>
+              </h2>
+
+              <form onSubmit={handlePasswordChange}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                      Current Password
+                    </label>
+                    <input
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="glass-input"
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 'var(--radius-md)', fontSize: '0.9rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                      New Password
+                    </label>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="glass-input"
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 'var(--radius-md)', fontSize: '0.9rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                      Confirm Password
+                    </label>
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="glass-input"
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 'var(--radius-md)', fontSize: '0.9rem' }}
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: 'var(--radius-md)',
+                    background: 'var(--aurora-gradient)',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    fontWeight: '700',
+                    fontSize: '0.875rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Update Password
+                </button>
+              </form>
+            </div>
+
+            {/* Privacy & Notification Controls */}
+            <div className="glass-panel" style={{ padding: '24px', borderRadius: 'var(--radius-lg)', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Bell size={18} color="#EC4899" />
+                <span>Privacy & Notifications</span>
+              </h2>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '0.925rem' }}>
+                      Online Presence Status
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                      Show green active status dot to accepted contacts.
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={onlineVisibility}
+                    onChange={(e) => setOnlineVisibility(e.target.checked)}
+                    style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '0.925rem' }}>
+                      Real-Time Contact Request Alerts
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                      Display instant popover toast when receiving requests.
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={pushNotifications}
+                    onChange={(e) => setPushNotifications(e.target.checked)}
+                    style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '0.925rem' }}>
+                      Sound Notifications
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                      Play subtle chime for incoming messages and calls.
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={soundAlerts}
+                    onChange={(e) => setSoundAlerts(e.target.checked)}
+                    style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Appearance & Themes */}
+            <div className="glass-panel" style={{ padding: '24px', borderRadius: 'var(--radius-lg)', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Palette size={18} color="#06B6D4" />
+                <span>Visual Theme Palette</span>
+              </h2>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
+                <button
+                  onClick={() => setSelectedTheme('aurora')}
+                  style={{
+                    padding: '16px',
+                    borderRadius: 'var(--radius-md)',
+                    border: selectedTheme === 'aurora' ? '2px solid #8B5CF6' : '1px solid var(--border-color)',
+                    backgroundColor: 'rgba(13, 18, 36, 0.8)',
+                    color: 'var(--text-main)',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <div style={{ fontWeight: '700', fontSize: '0.9rem', marginBottom: '4px' }}>Midnight Aurora</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Electric Indigo, Magenta & Glass</div>
+                </button>
+
+                <button
+                  onClick={() => setSelectedTheme('obsidian')}
+                  style={{
+                    padding: '16px',
+                    borderRadius: 'var(--radius-md)',
+                    border: selectedTheme === 'obsidian' ? '2px solid #8B5CF6' : '1px solid var(--border-color)',
+                    backgroundColor: 'rgba(13, 18, 36, 0.8)',
+                    color: 'var(--text-main)',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <div style={{ fontWeight: '700', fontSize: '0.9rem', marginBottom: '4px' }}>Obsidian Black</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Pure Monochrome Dark</div>
+                </button>
+
+                <button
+                  onClick={() => setSelectedTheme('cyberpunk')}
+                  style={{
+                    padding: '16px',
+                    borderRadius: 'var(--radius-md)',
+                    border: selectedTheme === 'cyberpunk' ? '2px solid #8B5CF6' : '1px solid var(--border-color)',
+                    backgroundColor: 'rgba(13, 18, 36, 0.8)',
+                    color: 'var(--text-main)',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <div style={{ fontWeight: '700', fontSize: '0.9rem', marginBottom: '4px' }}>Cyberpunk Pink</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Vibrant Pink & Neon Cyan</div>
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </main>

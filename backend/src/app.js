@@ -1,16 +1,22 @@
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const healthRoutes = require('./routes/health.routes');
 const messageRoutes = require('./routes/message.routes');
 const authRoutes = require('./routes/auth.routes');
+const uploadRoutes = require('./routes/upload.routes');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 
 const app = express();
 
-// Security middleware
-app.use(helmet());
+// Security middleware (configured to allow loading images cross-origin)
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+);
 
 // CORS configuration
 app.use(
@@ -21,9 +27,12 @@ app.use(
   })
 );
 
+// Serve static uploaded files
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Body parsing
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Logging middleware
 if (process.env.NODE_ENV !== 'test') {
@@ -34,6 +43,7 @@ if (process.env.NODE_ENV !== 'test') {
 app.use('/api', authRoutes);
 app.use('/api', healthRoutes);
 app.use('/api', messageRoutes);
+app.use('/api', uploadRoutes);
 
 // Error Handling Middlewares
 app.use(notFound);

@@ -28,6 +28,34 @@ export const loginMobileApi = async ({ identifier, password }) => {
   return data;
 };
 
+export const uploadMobileFileApi = async (fileUri, token = null) => {
+  const formData = new FormData();
+  const filename = fileUri.split('/').pop() || 'photo.jpg';
+  const match = /\.(\w+)$/.exec(filename);
+  const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+  formData.append('file', {
+    uri: fileUri,
+    name: filename,
+    type,
+  });
+
+  const response = await fetch(`${API_URL}/api/upload`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+    body: formData,
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.message || 'Photo upload failed');
+  }
+  return data;
+};
+
 export const fetchMobileHistory = async (roomId = 'general', limit = 100, token = null) => {
   const response = await fetch(`${API_URL}/api/messages?roomId=${encodeURIComponent(roomId)}&limit=${limit}`, {
     headers: {
@@ -42,14 +70,14 @@ export const fetchMobileHistory = async (roomId = 'general', limit = 100, token 
   return response.json();
 };
 
-export const sendMobileMessageApi = async ({ username, content, roomId = 'general' }, token = null) => {
+export const sendMobileMessageApi = async ({ username, content, mediaUrl, mediaType, roomId = 'general' }, token = null) => {
   const response = await fetch(`${API_URL}/api/messages`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       ...(token && { Authorization: `Bearer ${token}` }),
     },
-    body: JSON.stringify({ username, content, roomId }),
+    body: JSON.stringify({ username, content, mediaUrl, mediaType, roomId }),
   });
 
   if (!response.ok) {

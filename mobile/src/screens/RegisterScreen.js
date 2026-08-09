@@ -161,7 +161,7 @@ export const RegisterScreen = ({ onRegisterSuccess, onSwitchToLogin }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#090D16',
+    backgroundColor: '#05070F',
   },
   flexContainer: {
     flex: 1,
@@ -175,18 +175,18 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 380,
-    backgroundColor: '#131927',
-    borderRadius: 20,
+    backgroundColor: '#0D1224',
+    borderRadius: 22,
     padding: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(168, 85, 247, 0.2)',
     alignItems: 'center',
   },
   logoBadge: {
-    width: 54,
-    height: 54,
+    width: 56,
+    height: 56,
     borderRadius: 16,
-    backgroundColor: '#6366F1',
+    backgroundColor: '#8B5CF6',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -219,13 +219,13 @@ const styles = StyleSheet.create({
   input: {
     width: '100%',
     height: 44,
-    backgroundColor: '#1A2234',
+    backgroundColor: '#121930',
     borderRadius: 10,
     paddingHorizontal: 14,
     color: '#F8FAFC',
     fontSize: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.09)',
   },
   errorText: {
     color: '#EF4444',
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   button: {
     width: '100%',
     height: 46,
-    backgroundColor: '#6366F1',
+    backgroundColor: '#8B5CF6',
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   switchHighlight: {
-    color: '#6366F1',
+    color: '#A855F7',
     fontWeight: '700',
   },
 });

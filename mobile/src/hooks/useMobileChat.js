@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { fetchMobileHistory, sendMobileMessageApi } from '../services/api';
 import { mobileSocket, connectMobileSocket } from '../services/socket';
 
-export const useMobileChat = (username, roomId = 'general') => {
+export const useMobileChat = (username, roomId = 'general', token = null) => {
   const [messages, setMessages] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [typingUsers, setTypingUsers] = useState([]);
@@ -19,7 +19,7 @@ export const useMobileChat = (username, roomId = 'general') => {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetchMobileHistory(roomId);
+      const res = await fetchMobileHistory(roomId, 100, token);
       if (res && res.data) {
         setMessages(res.data);
       }
@@ -29,13 +29,13 @@ export const useMobileChat = (username, roomId = 'general') => {
     } finally {
       setLoading(false);
     }
-  }, [roomId]);
+  }, [roomId, token]);
 
   useEffect(() => {
     if (!username) return;
 
     loadHistory();
-    connectMobileSocket(username, roomId);
+    connectMobileSocket(username, roomId, token);
 
     const onConnect = () => setConnectionState('connected');
     const onDisconnect = () => setConnectionState('offline');
@@ -77,12 +77,12 @@ export const useMobileChat = (username, roomId = 'general') => {
       mobileSocket.off('user_typing', handleUserTyping);
       mobileSocket.off('user_stopped_typing', handleUserStoppedTyping);
     };
-  }, [username, roomId, loadHistory]);
+  }, [username, roomId, token, loadHistory]);
 
   const sendMessage = useCallback(
-    async (content) => {
-      if (!content || !content.trim()) return;
-      const trimmed = content.trim();
+    async ({ content = '', mediaUrl = null, mediaType = null }) => {
+      if (!content && !mediaUrl) return;
+      const trimmed = typeof content === 'string' ? content.trim() : '';
 
       if (isTypingRef.current) {
         isTypingRef.current = false;
@@ -94,16 +94,18 @@ export const useMobileChat = (username, roomId = 'general') => {
         mobileSocket.emit('send_message', {
           username,
           content: trimmed,
+          mediaUrl,
+          mediaType,
           roomId,
         });
       } else {
-        const res = await sendMobileMessageApi({ username, content: trimmed, roomId });
+        const res = await sendMobileMessageApi({ username, content: trimmed, mediaUrl, mediaType, roomId }, token);
         if (res && res.data) {
           setMessages((prev) => [...prev, res.data]);
         }
       }
     },
-    [username, roomId]
+    [username, roomId, token]
   );
 
   const handleInputChange = useCallback(() => {

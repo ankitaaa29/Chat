@@ -3,12 +3,23 @@ const { getIO } = require('../sockets/socketManager');
 
 const sendMessage = async (req, res, next) => {
   try {
-    const { username, content, roomId } = req.body;
+    const { username, content, mediaUrl, mediaType, roomId } = req.body;
 
-    // Persist message in PostgreSQL DB first
-    const message = await messageService.createMessage({ username, content, roomId });
+    if (!username || (!content && !mediaUrl)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Message content or media attachment is required',
+      });
+    }
 
-    // Broadcast message to room clients via Socket.io if connected
+    const message = await messageService.createMessage({
+      username,
+      content,
+      mediaUrl,
+      mediaType,
+      roomId,
+    });
+
     try {
       const io = getIO();
       if (io) {
@@ -16,7 +27,6 @@ const sendMessage = async (req, res, next) => {
         io.to(targetRoom).emit('new_message', message);
       }
     } catch (socketErr) {
-      // Log socket broadcast warning without failing REST request
       console.warn('Socket broadcast warning:', socketErr.message);
     }
 

@@ -38,7 +38,6 @@ export const useChat = (username, roomId = 'general') => {
     // Socket Event Handlers
     const handleNewMessage = (msg) => {
       setMessages((prev) => {
-        // De-duplicate if message already exists
         if (prev.some((m) => m.id === msg.id)) return prev;
         return [...prev, msg];
       });
@@ -74,12 +73,12 @@ export const useChat = (username, roomId = 'general') => {
     };
   }, [username, roomId, loadHistory]);
 
-  // Send message via Socket.io with REST fallback
+  // Send message with optional text & media attachments
   const sendMessage = useCallback(
-    async (content) => {
-      if (!content || !content.trim()) return;
+    async ({ content = '', mediaUrl = null, mediaType = null }) => {
+      if (!content && !mediaUrl) return;
 
-      const trimmedContent = content.trim();
+      const trimmedContent = typeof content === 'string' ? content.trim() : '';
 
       // Stop typing immediately when message is sent
       if (isTypingRef.current) {
@@ -92,12 +91,20 @@ export const useChat = (username, roomId = 'general') => {
         socket.emit('send_message', {
           username,
           content: trimmedContent,
+          mediaUrl,
+          mediaType,
           roomId,
         });
       } else {
-        // Fallback to REST API if socket is temporarily disconnected
+        // Fallback to REST API
         try {
-          const res = await sendMessageApi({ username, content: trimmedContent, roomId });
+          const res = await sendMessageApi({
+            username,
+            content: trimmedContent,
+            mediaUrl,
+            mediaType,
+            roomId,
+          });
           if (res && res.data) {
             setMessages((prev) => [...prev, res.data]);
           }

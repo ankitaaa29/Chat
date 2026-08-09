@@ -24,7 +24,9 @@ model User {
 
 model Message {
   id        String   @id @default(uuid())
-  content   String
+  content   String?
+  mediaUrl  String?
+  mediaType String?
   username  String
   userId    String?
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)

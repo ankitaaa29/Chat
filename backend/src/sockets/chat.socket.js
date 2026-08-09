@@ -82,20 +82,22 @@ const setupChatSockets = (io) => {
     socket.on('send_message', async (data = {}) => {
       try {
         const username = socket.user ? socket.user.username : data.username;
-        const { content, roomId = 'general' } = data;
+        const { content, mediaUrl, mediaType, roomId = 'general' } = data;
 
-        if (!username || !content || !content.trim()) {
-          return socket.emit('error_message', { message: 'Username and content are required' });
+        if (!username || (!content && !mediaUrl)) {
+          return socket.emit('error_message', { message: 'Username and content or media are required' });
         }
 
         const trimmedUser = username.trim();
-        const trimmedContent = content.trim();
+        const trimmedContent = content ? content.trim() : '';
         const targetRoom = roomId.trim() || 'general';
 
         // 1. MUST Persist message to PostgreSQL DB FIRST
         const savedMessage = await messageService.createMessage({
           username: trimmedUser,
           content: trimmedContent,
+          mediaUrl: mediaUrl || null,
+          mediaType: mediaType || null,
           roomId: targetRoom,
         });
 
@@ -129,6 +131,79 @@ const setupChatSockets = (io) => {
         username: username.trim(),
         roomId: targetRoom,
       });
+    });
+
+    // -------------------------------------------------------------
+    // WEBRTC VOICE & VIDEO CALL SIGNALING EVENTS
+    // -------------------------------------------------------------
+
+    // 1. Initiate WebRTC Call
+    socket.on('call_user', (data = {}) => {
+      const { userToCall, offer, callType = 'video', roomId = 'general' } = data;
+      const callerName = socket.user ? socket.user.username : data.callerName;
+
+      logger.info(`WebRTC Call Initiated from "${callerName}" to "${userToCall || 'room'}" (${callType})`);
+
+      if (userToCall && userSockets.has(userToCall)) {
+        const targetSockets = userSockets.get(userToCall);
+        targetSockets.forEach((targetSocketId) => {
+          io.to(targetSocketId).emit('incoming_call', {
+            from: socket.id,
+            callerName,
+            offer,
+            callType,
+            roomId,
+          });
+        });
+      } else {
+        // Broadcast to channel members except caller
+        socket.to(roomId).emit('incoming_call', {
+          from: socket.id,
+          callerName,
+          offer,
+          callType,
+          roomId,
+        });
+      }
+    });
+
+    // 2. Answer Incoming Call
+    socket.on('answer_call', (data = {}) => {
+      const { to, answer } = data;
+      logger.info(`WebRTC Call Answered by socket: ${socket.id} -> sending answer to ${to}`);
+      io.to(to).emit('call_accepted', {
+        from: socket.id,
+        answer,
+      });
+    });
+
+    // 3. Exchange ICE Candidates
+    socket.on('ice_candidate', (data = {}) => {
+      const { to, candidate } = data;
+      if (to && candidate) {
+        io.to(to).emit('ice_candidate', {
+          from: socket.id,
+          candidate,
+        });
+      }
+    });
+
+    // 4. End Call / Hang Up
+    socket.on('end_call', (data = {}) => {
+      const { to, roomId } = data;
+      if (to) {
+        io.to(to).emit('call_ended', { from: socket.id });
+      } else if (roomId) {
+        socket.to(roomId).emit('call_ended', { from: socket.id });
+      }
+    });
+
+    // 5. Reject Call
+    socket.on('reject_call', (data = {}) => {
+      const { to } = data;
+      if (to) {
+        io.to(to).emit('call_rejected', { from: socket.id });
+      }
     });
 
     // Event: disconnect

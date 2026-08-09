@@ -3,14 +3,15 @@ const userService = require('./user.service');
 const logger = require('../utils/logger');
 
 class MessageService {
-  async createMessage({ username, content, roomId = 'general' }) {
+  async createMessage({ username, content, mediaUrl, mediaType, roomId = 'general' }) {
     try {
-      // Ensure user exists in database
       let user = await userService.upsertUser(username, true);
 
       const message = await prisma.message.create({
         data: {
-          content,
+          content: content || '',
+          mediaUrl: mediaUrl || null,
+          mediaType: mediaType || null,
           username,
           userId: user ? user.id : null,
           roomId: roomId || 'general',

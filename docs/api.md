@@ -1,144 +1,106 @@
-# API & Socket.io Event Documentation
+# REST API & WebSocket Documentation
 
-## Authentication Endpoints
-
-### 1. User Registration
-Creates a new user account with hashed password and returns a signed JWT token.
-
-- **Method**: `POST`
-- **Path**: `/api/auth/register`
-- **Request Body**:
-```json
-{
-  "username": "Ankita",
-  "email": "ankita@example.com",
-  "password": "securepassword123"
-}
-```
-- **Success Response** (`201 Created`):
-```json
-{
-  "success": true,
-  "message": "User registered successfully",
-  "data": {
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "user": {
-      "id": "u123-uuid",
-      "username": "Ankita",
-      "email": "ankita@example.com",
-      "isOnline": true
-    }
-  }
-}
-```
+Base URL: `http://localhost:5000/api`
 
 ---
 
-### 2. User Login
-Authenticates user with email/username and password, returning a signed JWT token.
+## 🔐 1. Authentication Endpoints
 
-- **Method**: `POST`
-- **Path**: `/api/auth/login`
+### `POST /api/auth/register`
+Creates a new user account with hashed password (`bcryptjs`) and returns a signed JWT token.
+
 - **Request Body**:
-```json
-{
-  "identifier": "ankita@example.com",
-  "password": "securepassword123"
-}
-```
-- **Success Response** (`200 OK`):
-```json
-{
-  "success": true,
-  "message": "Login successful",
-  "data": {
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "user": {
-      "id": "u123-uuid",
-      "username": "Ankita",
-      "email": "ankita@example.com",
-      "isOnline": true
-    }
-  }
-}
-```
-
----
-
-### 3. Get Current User Profile
-Retrieves current authenticated user details from valid JWT token.
-
-- **Method**: `GET`
-- **Path**: `/api/auth/me`
-- **Headers**: `Authorization: Bearer <JWT_TOKEN>`
-- **Success Response** (`200 OK`):
-```json
-{
-  "success": true,
-  "data": {
-    "id": "u123-uuid",
-    "username": "Ankita",
+  ```json
+  {
+    "username": "ankita",
     "email": "ankita@example.com",
-    "isOnline": true
+    "password": "Password123"
   }
-}
-```
+  ```
+- **Success Response (201 Created)**:
+  ```json
+  {
+    "success": true,
+    "message": "User registered successfully",
+    "data": {
+      "user": {
+        "id": "uuid-v4",
+        "username": "ankita",
+        "email": "ankita@example.com"
+      },
+      "token": "eyJhbGciOiJIUzI1Ni..."
+    }
+  }
+  ```
 
 ---
 
-## REST Endpoints
+### `POST /api/auth/login`
+Authenticates user using email or username and returns a signed JWT token.
 
-### 1. Health Check
-- **Method**: `GET`
-- **Path**: `/api/health`
-
----
-
-### 2. Fetch Chat History
-- **Method**: `GET`
-- **Path**: `/api/messages`
-- **Headers**: `Authorization: Bearer <JWT_TOKEN>` (optional)
-
----
-
-### 3. Send Message
-- **Method**: `POST`
-- **Path**: `/api/messages`
-- **Headers**: `Authorization: Bearer <JWT_TOKEN>` (optional)
 - **Request Body**:
-```json
-{
-  "username": "Ankita",
-  "content": "Hello everyone!",
-  "roomId": "general"
-}
-```
+  ```json
+  {
+    "identifier": "ankita@example.com",
+    "password": "Password123"
+  }
+  ```
 
 ---
 
-## Socket.io Specifications
+## 📷 2. Media & Upload Endpoints
 
-### Socket Handshake Authentication
-Client authenticates connection by supplying `auth: { token: "<JWT_TOKEN>" }` in the Socket.io initialization.
+### `POST /api/upload`
+Uploads photos or files to the backend static storage (`backend/uploads/`).
 
-```javascript
-const socket = io('http://localhost:5000', {
-  auth: {
-    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+- **Headers**: `Content-Type: multipart/form-data`
+- **Request Body**:
+  - `file`: Image/Photo file binary.
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "File uploaded successfully",
+    "data": {
+      "fileUrl": "/uploads/photo-1786275841029.jpg",
+      "fileName": "photo-1786275841029.jpg",
+      "mediaType": "image"
+    }
   }
-});
-```
+  ```
 
-### Client → Server Events
-- `join_room`: `{ username, roomId }`
-- `send_message`: `{ username, content, roomId }`
-- `typing_start`: `{ username, roomId }`
-- `typing_stop`: `{ username, roomId }`
+---
 
-### Server → Client Events
-- `new_message`: Saved message object
-- `user_joined`: Notification when user enters room
-- `user_left`: Notification when user disconnects
-- `user_typing`: Typing status notification
-- `user_stopped_typing`: Typing stopped notification
-- `online_users`: Current roster of online users
+## 💬 3. Chat & Message Endpoints
+
+### `POST /api/messages`
+Sends a text message and/or photo media attachment.
+
+- **Headers**: `Authorization: Bearer <jwt_token>`
+- **Request Body**:
+  ```json
+  {
+    "username": "ankita",
+    "content": "Check out this photo!",
+    "mediaUrl": "/uploads/photo-1786275841029.jpg",
+    "mediaType": "image",
+    "roomId": "general"
+  }
+  ```
+
+---
+
+### `GET /api/messages?roomId=general&limit=100`
+Retrieves chat history for a channel.
+
+---
+
+## ⚡ 4. WebSocket Real-Time Events (`Socket.io`)
+
+- **Handshake Connection**:
+  Pass JWT token in auth: `{ auth: { token: "<jwt_token>" } }`.
+- **Events**:
+  - `send_message`: `{ username, content, mediaUrl, mediaType, roomId }`
+  - `new_message`: Broadcasts message payload to room members.
+  - `typing_start` / `typing_stop`: Broadcasts user typing activity.
+  - `online_users`: Transmits array of active online user objects.

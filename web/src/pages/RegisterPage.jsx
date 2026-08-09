@@ -69,21 +69,28 @@ export const RegisterPage = ({ onRegisterSuccess, onSwitchToLogin }) => {
         minHeight: '100vh',
         width: '100vw',
         backgroundColor: 'var(--bg-dark)',
-        backgroundImage: 'radial-gradient(circle at 50% 30%, rgba(99, 102, 241, 0.12) 0%, transparent 60%)',
         padding: '20px',
-        overflowY: 'auto',
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
+      {/* Ambient Orbs */}
+      <div className="ambient-bg">
+        <div className="orb orb-1" />
+        <div className="orb orb-2" />
+        <div className="orb orb-3" />
+      </div>
+
       <div
-        className="animate-fade-in"
+        className="animate-fade-in glass-panel"
         style={{
           width: '100%',
           maxWidth: '440px',
-          backgroundColor: 'var(--bg-card)',
-          border: '1px solid var(--border-color)',
           borderRadius: 'var(--radius-lg)',
           padding: '36px',
-          boxShadow: 'var(--shadow-lg)',
+          boxShadow: 'var(--shadow-md)',
+          position: 'relative',
+          zIndex: 10,
           margin: 'auto',
         }}
       >
@@ -98,19 +105,19 @@ export const RegisterPage = ({ onRegisterSuccess, onSwitchToLogin }) => {
         >
           <div
             style={{
-              width: '56px',
-              height: '56px',
+              width: '60px',
+              height: '60px',
               borderRadius: 'var(--radius-md)',
-              background: 'linear-gradient(135deg, var(--primary) 0%, #4F46E5 100%)',
+              background: 'var(--aurora-gradient)',
               color: '#FFFFFF',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               marginBottom: '16px',
-              boxShadow: '0 8px 20px rgba(99, 102, 241, 0.3)',
+              boxShadow: 'var(--shadow-aurora)',
             }}
           >
-            <MessageSquare size={28} />
+            <MessageSquare size={30} />
           </div>
 
           <h1
@@ -127,7 +134,7 @@ export const RegisterPage = ({ onRegisterSuccess, onSwitchToLogin }) => {
           </h1>
 
           <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-            Join PulseChat for end-to-end encrypted real-time messaging.
+            Join PulseChat for real-time encrypted communication.
           </p>
         </div>
 
@@ -136,17 +143,17 @@ export const RegisterPage = ({ onRegisterSuccess, onSwitchToLogin }) => {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
+              gap: '10px',
               padding: '12px 14px',
-              backgroundColor: 'rgba(239, 68, 68, 0.12)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
+              backgroundColor: 'rgba(239, 68, 68, 0.14)',
+              border: '1px solid rgba(239, 68, 68, 0.35)',
               borderRadius: 'var(--radius-md)',
               color: '#EF4444',
               fontSize: '0.85rem',
               marginBottom: '20px',
             }}
           >
-            <AlertCircle size={16} flexShrink={0} />
+            <AlertCircle size={18} style={{ flexShrink: 0 }} />
             <span>{error}</span>
           </div>
         )}
@@ -161,7 +168,7 @@ export const RegisterPage = ({ onRegisterSuccess, onSwitchToLogin }) => {
                 color: 'var(--text-muted)',
                 marginBottom: '6px',
                 textTransform: 'uppercase',
-                letterSpacing: '0.04em',
+                letterSpacing: '0.05em',
               }}
             >
               Username
@@ -172,15 +179,12 @@ export const RegisterPage = ({ onRegisterSuccess, onSwitchToLogin }) => {
               onChange={(e) => setUsername(e.target.value)}
               placeholder="e.g. Ankita"
               required
+              className="glass-input"
               style={{
                 width: '100%',
                 padding: '11px 14px',
-                backgroundColor: 'var(--bg-input)',
-                border: '1px solid var(--border-color)',
                 borderRadius: 'var(--radius-md)',
-                color: 'var(--text-main)',
                 fontSize: '0.925rem',
-                outline: 'none',
               }}
             />
           </div>
@@ -194,7 +198,7 @@ export const RegisterPage = ({ onRegisterSuccess, onSwitchToLogin }) => {
                 color: 'var(--text-muted)',
                 marginBottom: '6px',
                 textTransform: 'uppercase',
-                letterSpacing: '0.04em',
+                letterSpacing: '0.05em',
               }}
             >
               Email Address
@@ -205,15 +209,12 @@ export const RegisterPage = ({ onRegisterSuccess, onSwitchToLogin }) => {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="ankita@example.com"
               required
+              className="glass-input"
               style={{
                 width: '100%',
                 padding: '11px 14px',
-                backgroundColor: 'var(--bg-input)',
-                border: '1px solid var(--border-color)',
                 borderRadius: 'var(--radius-md)',
-                color: 'var(--text-main)',
                 fontSize: '0.925rem',
-                outline: 'none',
               }}
             />
           </div>
@@ -227,7 +228,7 @@ export const RegisterPage = ({ onRegisterSuccess, onSwitchToLogin }) => {
                 color: 'var(--text-muted)',
                 marginBottom: '6px',
                 textTransform: 'uppercase',
-                letterSpacing: '0.04em',
+                letterSpacing: '0.05em',
               }}
             >
               Password
@@ -238,15 +239,12 @@ export const RegisterPage = ({ onRegisterSuccess, onSwitchToLogin }) => {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
+              className="glass-input"
               style={{
                 width: '100%',
                 padding: '11px 14px',
-                backgroundColor: 'var(--bg-input)',
-                border: '1px solid var(--border-color)',
                 borderRadius: 'var(--radius-md)',
-                color: 'var(--text-main)',
                 fontSize: '0.925rem',
-                outline: 'none',
               }}
             />
           </div>
@@ -260,7 +258,7 @@ export const RegisterPage = ({ onRegisterSuccess, onSwitchToLogin }) => {
                 color: 'var(--text-muted)',
                 marginBottom: '6px',
                 textTransform: 'uppercase',
-                letterSpacing: '0.04em',
+                letterSpacing: '0.05em',
               }}
             >
               Confirm Password
@@ -271,15 +269,12 @@ export const RegisterPage = ({ onRegisterSuccess, onSwitchToLogin }) => {
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
               required
+              className="glass-input"
               style={{
                 width: '100%',
                 padding: '11px 14px',
-                backgroundColor: 'var(--bg-input)',
-                border: '1px solid var(--border-color)',
                 borderRadius: 'var(--radius-md)',
-                color: 'var(--text-main)',
                 fontSize: '0.925rem',
-                outline: 'none',
               }}
             />
           </div>
@@ -290,19 +285,19 @@ export const RegisterPage = ({ onRegisterSuccess, onSwitchToLogin }) => {
             style={{
               width: '100%',
               padding: '12px',
-              background: 'linear-gradient(135deg, var(--primary) 0%, #4F46E5 100%)',
+              background: 'var(--aurora-gradient)',
               color: '#FFFFFF',
               border: 'none',
               borderRadius: 'var(--radius-md)',
               fontSize: '0.95rem',
-              fontWeight: '600',
+              fontWeight: '700',
               cursor: loading ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '8px',
-              boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)',
-              opacity: loading ? 0.7 : 1,
+              boxShadow: 'var(--shadow-aurora)',
+              opacity: loading ? 0.75 : 1,
             }}
           >
             <UserPlus size={18} />
@@ -324,8 +319,8 @@ export const RegisterPage = ({ onRegisterSuccess, onSwitchToLogin }) => {
             style={{
               background: 'none',
               border: 'none',
-              color: 'var(--primary)',
-              fontWeight: '600',
+              color: '#A855F7',
+              fontWeight: '700',
               cursor: 'pointer',
               textDecoration: 'underline',
               padding: '0',

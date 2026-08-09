@@ -16,9 +16,12 @@ import { MessageItem } from '../components/MessageItem';
 import { ConnectionStatus } from '../components/ConnectionStatus';
 import { TypingBar } from '../components/TypingBar';
 import { disconnectMobileSocket } from '../services/socket';
+import { uploadMobileFileApi } from '../services/api';
 
-export const ChatScreen = ({ username, onLogout }) => {
+export const ChatScreen = ({ username, user, token, onLogout }) => {
   const [inputText, setInputText] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [attachedMedia, setAttachedMedia] = useState(null); // { url, type }
   const flatListRef = useRef(null);
 
   const {
@@ -31,12 +34,17 @@ export const ChatScreen = ({ username, onLogout }) => {
     reloadHistory,
     sendMessage,
     handleInputChange,
-  } = useMobileChat(username, 'general');
+  } = useMobileChat(username, 'general', token);
 
   const handleSend = () => {
-    if (!inputText.trim()) return;
-    sendMessage(inputText);
+    if (!inputText.trim() && !attachedMedia) return;
+    sendMessage({
+      content: inputText.trim(),
+      mediaUrl: attachedMedia ? attachedMedia.url : null,
+      mediaType: attachedMedia ? attachedMedia.type : null,
+    });
     setInputText('');
+    setAttachedMedia(null);
   };
 
   const handleExit = () => {
@@ -69,7 +77,7 @@ export const ChatScreen = ({ username, onLogout }) => {
         {/* Message Stream */}
         {loading ? (
           <View style={styles.centerContainer}>
-            <ActivityIndicator size="large" color="#6366F1" />
+            <ActivityIndicator size="large" color="#8B5CF6" />
             <Text style={styles.loadingText}>Loading messages...</Text>
           </View>
         ) : error ? (
@@ -83,7 +91,7 @@ export const ChatScreen = ({ username, onLogout }) => {
         ) : messages.length === 0 ? (
           <View style={styles.centerContainer}>
             <Text style={styles.emptyTitle}>No messages yet</Text>
-            <Text style={styles.emptySub}>Start the conversation 👋</Text>
+            <Text style={styles.emptySub}>Start the conversation 👋 Send a message or photo!</Text>
           </View>
         ) : (
           <FlatList
@@ -102,7 +110,22 @@ export const ChatScreen = ({ username, onLogout }) => {
         {/* Typing Bar */}
         <TypingBar typingUsers={typingUsers} />
 
-        {/* Input Bar */}
+        {/* Media Preview Attachment Bar */}
+        {uploading ? (
+          <View style={styles.previewContainer}>
+            <ActivityIndicator size="small" color="#8B5CF6" />
+            <Text style={styles.uploadingText}>Uploading photo...</Text>
+          </View>
+        ) : attachedMedia ? (
+          <View style={styles.previewContainer}>
+            <Text style={styles.attachedText}>📷 Photo Attached</Text>
+            <TouchableOpacity onPress={() => setAttachedMedia(null)}>
+              <Text style={styles.removeText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
+        {/* Mobile Input Controls */}
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.textInput}
@@ -119,10 +142,10 @@ export const ChatScreen = ({ username, onLogout }) => {
           <TouchableOpacity
             style={[
               styles.sendButton,
-              (!inputText.trim() || connectionState === 'offline') ? styles.sendButtonDisabled : null,
+              ((!inputText.trim() && !attachedMedia) || connectionState === 'offline' || uploading) ? styles.sendButtonDisabled : null,
             ]}
             onPress={handleSend}
-            disabled={!inputText.trim() || connectionState === 'offline'}
+            disabled={(!inputText.trim() && !attachedMedia) || connectionState === 'offline' || uploading}
           >
             <Text style={styles.sendButtonText}>➤</Text>
           </TouchableOpacity>
@@ -135,7 +158,7 @@ export const ChatScreen = ({ username, onLogout }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#090D16',
+    backgroundColor: '#05070F',
   },
   flexContainer: {
     flex: 1,
@@ -146,9 +169,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#131927',
+    backgroundColor: '#0D1224',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.09)',
   },
   headerTitleGroup: {
     flexDirection: 'row',
@@ -204,7 +227,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#6366F1',
+    backgroundColor: '#8B5CF6',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
@@ -226,37 +249,63 @@ const styles = StyleSheet.create({
   listContent: {
     paddingVertical: 12,
   },
+  previewContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#121930',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.09)',
+  },
+  uploadingText: {
+    color: '#8B5CF6',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  attachedText: {
+    color: '#F8FAFC',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  removeText: {
+    color: '#EF4444',
+    fontSize: 16,
+    fontWeight: '700',
+    paddingHorizontal: 8,
+  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: '#131927',
+    backgroundColor: '#0D1224',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+    borderTopColor: 'rgba(255, 255, 255, 0.09)',
     gap: 8,
   },
   textInput: {
     flex: 1,
     height: 44,
-    backgroundColor: '#1A2234',
+    backgroundColor: '#121930',
     borderRadius: 22,
     paddingHorizontal: 16,
     color: '#F8FAFC',
     fontSize: 15,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.09)',
   },
   sendButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#6366F1',
+    backgroundColor: '#8B5CF6',
     alignItems: 'center',
     justifyContent: 'center',
   },
   sendButtonDisabled: {
-    backgroundColor: 'rgba(99, 102, 241, 0.3)',
+    backgroundColor: 'rgba(139, 92, 246, 0.3)',
   },
   sendButtonText: {
     color: '#FFFFFF',

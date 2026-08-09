@@ -1,10 +1,18 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet } from 'react-native';
 import { formatMobileTime, getMobileInitials, getMobileAvatarColor } from '../utils/helpers';
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
 
 export const MessageItem = ({ message, currentUsername }) => {
   const isSelf = message.username === currentUsername;
   const avatarColor = getMobileAvatarColor(message.username);
+
+  const mediaFullUrl = message.mediaUrl
+    ? message.mediaUrl.startsWith('http')
+      ? message.mediaUrl
+      : `${API_URL}${message.mediaUrl}`
+    : null;
 
   return (
     <View style={[styles.container, isSelf ? styles.selfContainer : styles.otherContainer]}>
@@ -18,9 +26,19 @@ export const MessageItem = ({ message, currentUsername }) => {
         {!isSelf && <Text style={styles.usernameText}>{message.username}</Text>}
 
         <View style={[styles.bubble, isSelf ? styles.selfBubble : styles.otherBubble]}>
-          <Text style={[styles.messageText, isSelf ? styles.selfMessageText : styles.otherMessageText]}>
-            {message.content}
-          </Text>
+          {mediaFullUrl && (
+            <Image
+              source={{ uri: mediaFullUrl }}
+              style={styles.mediaImage}
+              resizeMode="cover"
+            />
+          )}
+
+          {message.content ? (
+            <Text style={[styles.messageText, isSelf ? styles.selfMessageText : styles.otherMessageText]}>
+              {message.content}
+            </Text>
+          ) : null}
         </View>
 
         <Text style={styles.timestampText}>{formatMobileTime(message.createdAt)}</Text>
@@ -50,7 +68,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 8,
     marginBottom: 16,
-    shadowColor: '#6366F1',
+    shadowColor: '#8B5CF6',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -77,8 +95,8 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   bubble: {
-    paddingHorizontal: 16,
-    paddingVertical: 11,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderRadius: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -87,14 +105,20 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   selfBubble: {
-    backgroundColor: '#6366F1',
+    backgroundColor: '#8B5CF6',
     borderBottomRightRadius: 4,
   },
   otherBubble: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#121930',
     borderBottomLeftRadius: 4,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.09)',
+  },
+  mediaImage: {
+    width: 220,
+    height: 180,
+    borderRadius: 12,
+    marginBottom: 6,
   },
   messageText: {
     fontSize: 15,

@@ -17,6 +17,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.ankitaaaa.chatmobile",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#090D16"
@@ -27,6 +28,11 @@
     },
     "plugins": [
       "expo-asset"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "af4fc7ce-e1c4-4c75-9622-805567a88c96"
+      }
+    }
   }
 }

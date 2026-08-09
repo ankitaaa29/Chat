@@ -27,7 +27,14 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you share images with friends.",
+          "cameraPermission": "The app accesses your camera to let you capture and send photos."
+        }
+      ]
     ],
     "extra": {
       "eas": {

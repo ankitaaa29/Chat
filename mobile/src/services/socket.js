@@ -10,7 +10,11 @@ export const mobileSocket = io(SOCKET_URL, {
   transports: ['websocket', 'polling'],
 });
 
-export const connectMobileSocket = (username, roomId = 'general') => {
+export const connectMobileSocket = (username, roomId = 'general', token = null) => {
+  if (token) {
+    mobileSocket.auth = { token };
+  }
+
   if (!mobileSocket.connected) {
     mobileSocket.connect();
   }

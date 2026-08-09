@@ -2,10 +2,11 @@ const messageService = require('../services/message.service');
 const userService = require('../services/user.service');
 const logger = require('../utils/logger');
 const { setIO } = require('./socketManager');
+const { verifyToken } = require('../middleware/auth.middleware');
 
 // Store active connections: socketId -> { username, roomId }
 const activeSockets = new Map();
-// Store active usernames: username -> Set of socketIds (to handle multi-tab/device connections correctly)
+// Store active usernames: username -> Set of socketIds
 const userSockets = new Map();
 
 const broadcastOnlineUsers = async (io) => {
@@ -20,12 +21,26 @@ const broadcastOnlineUsers = async (io) => {
 const setupChatSockets = (io) => {
   setIO(io);
 
+  // Optional Socket Middleware: Authenticate connections if auth token is present
+  io.use((socket, next) => {
+    const token = socket.handshake.auth && socket.handshake.auth.token;
+    if (token) {
+      const decoded = verifyToken(token);
+      if (decoded) {
+        socket.user = decoded;
+      }
+    }
+    next();
+  });
+
   io.on('connection', (socket) => {
-    logger.info(`Socket connected: ${socket.id}`);
+    logger.info(`Socket connected: ${socket.id} ${socket.user ? `(Authenticated user: ${socket.user.username})` : ''}`);
 
     // Event: join_room
     socket.on('join_room', async (data = {}) => {
-      const { username, roomId = 'general' } = data;
+      const username = socket.user ? socket.user.username : data.username;
+      const roomId = data.roomId || 'general';
+
       if (!username || typeof username !== 'string') return;
 
       const trimmedUser = username.trim();
@@ -66,7 +81,8 @@ const setupChatSockets = (io) => {
     // Event: send_message
     socket.on('send_message', async (data = {}) => {
       try {
-        const { username, content, roomId = 'general' } = data;
+        const username = socket.user ? socket.user.username : data.username;
+        const { content, roomId = 'general' } = data;
 
         if (!username || !content || !content.trim()) {
           return socket.emit('error_message', { message: 'Username and content are required' });
@@ -93,7 +109,8 @@ const setupChatSockets = (io) => {
 
     // Event: typing_start
     socket.on('typing_start', (data = {}) => {
-      const { username, roomId = 'general' } = data;
+      const username = socket.user ? socket.user.username : data.username;
+      const roomId = data.roomId || 'general';
       if (!username) return;
       const targetRoom = roomId.trim() || 'general';
       socket.to(targetRoom).emit('user_typing', {
@@ -104,7 +121,8 @@ const setupChatSockets = (io) => {
 
     // Event: typing_stop
     socket.on('typing_stop', (data = {}) => {
-      const { username, roomId = 'general' } = data;
+      const username = socket.user ? socket.user.username : data.username;
+      const roomId = data.roomId || 'general';
       if (!username) return;
       const targetRoom = roomId.trim() || 'general';
       socket.to(targetRoom).emit('user_stopped_typing', {

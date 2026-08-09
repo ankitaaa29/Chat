@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const healthRoutes = require('./routes/health.routes');
 const messageRoutes = require('./routes/message.routes');
+const authRoutes = require('./routes/auth.routes');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 
 const app = express();
@@ -14,7 +15,7 @@ app.use(helmet());
 // CORS configuration
 app.use(
   cors({
-    origin: '*', // Allow connections from Web, Mobile Expo, and Docker clients
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   })
@@ -30,6 +31,7 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // API Routes
+app.use('/api', authRoutes);
 app.use('/api', healthRoutes);
 app.use('/api', messageRoutes);
 

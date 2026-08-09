@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { MessageSquare, LogIn, Sparkles, AlertCircle } from 'lucide-react';
-import { loginApi } from '../services/api';
+import { MessageSquare, UserPlus, Sparkles, AlertCircle } from 'lucide-react';
+import { registerApi } from '../services/api';
 
-export const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
-  const [identifier, setIdentifier] = useState('');
+export const RegisterPage = ({ onRegisterSuccess, onSwitchToLogin }) => {
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -12,21 +14,47 @@ export const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
     e.preventDefault();
     setError('');
 
-    const trimmed = identifier.trim();
-    if (!trimmed || !password) {
-      setError('Please enter your email/username and password');
+    const trimmedUser = username.trim();
+    const trimmedEmail = email.trim();
+
+    if (!trimmedUser || !trimmedEmail || !password) {
+      setError('All fields are required');
+      return;
+    }
+
+    if (trimmedUser.length < 2) {
+      setError('Username must be at least 2 characters long');
+      return;
+    }
+
+    if (!trimmedEmail.includes('@') || !trimmedEmail.includes('.')) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
       return;
     }
 
     try {
       setLoading(true);
-      const response = await loginApi({ identifier: trimmed, password });
+      const response = await registerApi({
+        username: trimmedUser,
+        email: trimmedEmail,
+        password,
+      });
 
       if (response && response.data) {
-        onLoginSuccess(response.data.token, response.data.user);
+        onRegisterSuccess(response.data.token, response.data.user);
       }
     } catch (err) {
-      setError(err.message || 'Authentication failed. Please check credentials.');
+      setError(err.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -50,7 +78,7 @@ export const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
         className="animate-fade-in"
         style={{
           width: '100%',
-          maxWidth: '420px',
+          maxWidth: '440px',
           backgroundColor: 'var(--bg-card)',
           border: '1px solid var(--border-color)',
           borderRadius: 'var(--radius-lg)',
@@ -65,7 +93,7 @@ export const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
             flexDirection: 'column',
             alignItems: 'center',
             textAlign: 'center',
-            marginBottom: '32px',
+            marginBottom: '28px',
           }}
         >
           <div
@@ -95,11 +123,11 @@ export const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
               marginBottom: '8px',
             }}
           >
-            Welcome Back
+            Create Your Account
           </h1>
 
           <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-            Sign in to access your real-time chat workspace.
+            Join PulseChat for end-to-end encrypted real-time messaging.
           </p>
         </div>
 
@@ -124,7 +152,7 @@ export const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
         )}
 
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '18px' }}>
+          <div style={{ marginBottom: '16px' }}>
             <label
               style={{
                 display: 'block',
@@ -136,18 +164,83 @@ export const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
                 letterSpacing: '0.04em',
               }}
             >
-              Email or Username
+              Username
             </label>
             <input
               type="text"
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              placeholder="e.g. ankita@example.com or Ankita"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="e.g. Ankita"
               required
-              autoFocus
               style={{
                 width: '100%',
-                padding: '12px 14px',
+                padding: '11px 14px',
+                backgroundColor: 'var(--bg-input)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-md)',
+                color: 'var(--text-main)',
+                fontSize: '0.925rem',
+                outline: 'none',
+              }}
+            />
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '0.78rem',
+                fontWeight: '700',
+                color: 'var(--text-muted)',
+                marginBottom: '6px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+              }}
+            >
+              Email Address
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="ankita@example.com"
+              required
+              style={{
+                width: '100%',
+                padding: '11px 14px',
+                backgroundColor: 'var(--bg-input)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-md)',
+                color: 'var(--text-main)',
+                fontSize: '0.925rem',
+                outline: 'none',
+              }}
+            />
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '0.78rem',
+                fontWeight: '700',
+                color: 'var(--text-muted)',
+                marginBottom: '6px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+              }}
+            >
+              Password
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              style={{
+                width: '100%',
+                padding: '11px 14px',
                 backgroundColor: 'var(--bg-input)',
                 border: '1px solid var(--border-color)',
                 borderRadius: 'var(--radius-md)',
@@ -170,17 +263,17 @@ export const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
                 letterSpacing: '0.04em',
               }}
             >
-              Password
+              Confirm Password
             </label>
             <input
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
               required
               style={{
                 width: '100%',
-                padding: '12px 14px',
+                padding: '11px 14px',
                 backgroundColor: 'var(--bg-input)',
                 border: '1px solid var(--border-color)',
                 borderRadius: 'var(--radius-md)',
@@ -196,7 +289,7 @@ export const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
             disabled={loading}
             style={{
               width: '100%',
-              padding: '13px',
+              padding: '12px',
               background: 'linear-gradient(135deg, var(--primary) 0%, #4F46E5 100%)',
               color: '#FFFFFF',
               border: 'none',
@@ -212,8 +305,8 @@ export const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
               opacity: loading ? 0.7 : 1,
             }}
           >
-            <LogIn size={18} />
-            <span>{loading ? 'Authenticating...' : 'Sign In'}</span>
+            <UserPlus size={18} />
+            <span>{loading ? 'Creating Account...' : 'Register'}</span>
           </button>
         </form>
 
@@ -225,9 +318,9 @@ export const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
             color: 'var(--text-muted)',
           }}
         >
-          Don't have an account?{' '}
+          Already have an account?{' '}
           <button
-            onClick={onSwitchToRegister}
+            onClick={onSwitchToLogin}
             style={{
               background: 'none',
               border: 'none',
@@ -238,7 +331,7 @@ export const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
               padding: '0',
             }}
           >
-            Register Now
+            Sign In
           </button>
         </div>
       </div>

@@ -10,7 +10,16 @@ export const socket = io(SOCKET_URL, {
   transports: ['websocket', 'polling'],
 });
 
-export const connectSocket = (username, roomId = 'general') => {
+export const connectSocket = (username, roomId = 'general', token = null) => {
+  if (token) {
+    socket.auth = { token };
+  } else {
+    const storedToken = localStorage.getItem('chat_token');
+    if (storedToken) {
+      socket.auth = { token: storedToken };
+    }
+  }
+
   if (!socket.connected) {
     socket.connect();
   }

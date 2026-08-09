@@ -8,24 +8,35 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
+import { loginMobileApi } from '../services/api';
 
-export const LoginScreen = ({ onLogin }) => {
-  const [username, setUsername] = useState('');
+export const LoginScreen = ({ onLoginSuccess, onSwitchToRegister }) => {
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
-    const trimmed = username.trim();
-    if (!trimmed) {
-      setError('Please enter a display username');
+  const handleSubmit = async () => {
+    const trimmed = identifier.trim();
+    if (!trimmed || !password) {
+      setError('Please enter your email/username and password');
       return;
     }
-    if (trimmed.length < 2) {
-      setError('Username must be at least 2 characters');
-      return;
+
+    try {
+      setLoading(true);
+      setError('');
+      const res = await loginMobileApi({ identifier: trimmed, password });
+      if (res && res.data) {
+        onLoginSuccess(res.data.token, res.data.user);
+      }
+    } catch (err) {
+      setError(err.message || 'Authentication failed');
+    } finally {
+      setLoading(false);
     }
-    setError('');
-    onLogin(trimmed);
   };
 
   return (
@@ -41,28 +52,59 @@ export const LoginScreen = ({ onLogin }) => {
 
           <Text style={styles.title}>PulseChat</Text>
           <Text style={styles.subtitle}>
-            Enter your display name to join real-time chat rooms instantly.
+            Sign in to access your secure chat workspace.
           </Text>
 
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>USERNAME</Text>
+            <Text style={styles.label}>EMAIL OR USERNAME</Text>
             <TextInput
-              style={[styles.input, error ? styles.inputError : null]}
-              value={username}
+              style={styles.input}
+              value={identifier}
               onChangeText={(text) => {
-                setUsername(text);
+                setIdentifier(text);
                 if (error) setError('');
               }}
-              placeholder="e.g. Rahul"
+              placeholder="e.g. rahul@example.com or Rahul"
               placeholderTextColor="#64748B"
               autoCapitalize="none"
               autoCorrect={false}
             />
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
           </View>
 
-          <TouchableOpacity style={styles.button} onPress={handleSubmit} activeOpacity={0.85}>
-            <Text style={styles.buttonText}>Enter Chat Room</Text>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>PASSWORD</Text>
+            <TextInput
+              style={styles.input}
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                if (error) setError('');
+              }}
+              placeholder="••••••••"
+              placeholderTextColor="#64748B"
+              secureTextEntry
+            />
+          </View>
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleSubmit}
+            disabled={loading}
+            activeOpacity={0.85}
+          >
+            {loading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.buttonText}>Sign In</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.switchButton} onPress={onSwitchToRegister}>
+            <Text style={styles.switchText}>
+              Don't have an account? <Text style={styles.switchHighlight}>Register Now</Text>
+            </Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -118,15 +160,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#94A3B8',
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
     lineHeight: 18,
   },
   inputGroup: {
     width: '100%',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   label: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
     color: '#94A3B8',
     marginBottom: 6,
@@ -143,13 +185,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
   },
-  inputError: {
-    borderColor: '#EF4444',
-  },
   errorText: {
     color: '#EF4444',
     fontSize: 12,
-    marginTop: 4,
+    marginBottom: 12,
+    textAlign: 'center',
   },
   button: {
     width: '100%',
@@ -163,10 +203,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
+    marginTop: 6,
   },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 15,
+    fontWeight: '700',
+  },
+  switchButton: {
+    marginTop: 20,
+  },
+  switchText: {
+    color: '#94A3B8',
+    fontSize: 13,
+  },
+  switchHighlight: {
+    color: '#6366F1',
     fontWeight: '700',
   },
 });

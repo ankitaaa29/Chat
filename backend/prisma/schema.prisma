@@ -11,6 +11,8 @@ datasource db {
 model User {
   id        String    @id @default(uuid())
   username  String    @unique
+  email     String?   @unique
+  password  String?
   isOnline  Boolean   @default(false)
   lastSeen  DateTime  @default(now())
   createdAt DateTime  @default(now())

@@ -121,7 +121,7 @@ Ensure you have the following installed on your system:
 
 ---
 
-## 🔑 Environment Variables
+## 🔑 Environment Variables Required
 
 ### Backend (`backend/.env`)
 ```env
@@ -132,13 +132,13 @@ JWT_SECRET=pulsechat_secret_key
 CLIENT_URL=*
 ```
 
-### Web (`web/.env`)
+### Web Frontend (`web/.env`)
 ```env
 VITE_API_URL=http://localhost:5000
 VITE_SOCKET_URL=http://localhost:5000
 ```
 
-### Mobile (`mobile/.env`)
+### Mobile Frontend (`mobile/.env`)
 ```env
 EXPO_PUBLIC_API_URL=http://localhost:5000
 EXPO_PUBLIC_SOCKET_URL=http://localhost:5000
@@ -146,64 +146,75 @@ EXPO_PUBLIC_SOCKET_URL=http://localhost:5000
 
 ---
 
-## 🐳 Docker Quick Start (Web + Backend + PostgreSQL)
+## 🛠 Project Setup Instructions
+
+### Quick Start with Docker Compose (Recommended)
 
 The backend API, web frontend, and PostgreSQL database are fully containerized using Docker Compose.
 
-### 1. Build & Start All Services
 ```bash
+# 1. Clone the repository
+git clone https://github.com/ankitaaa29/Chat.git
+cd Chat
+
+# 2. Build and launch all services in background
 docker compose up -d --build
-```
 
-### 2. View Service Logs
-```bash
-# Live logs for all services
+# 3. View live logs across all containers
 docker compose logs -f
-
-# Backend logs only
-docker compose logs -f backend
-
-# PostgreSQL logs only
-docker compose logs -f postgres
 ```
-
-### 3. Stop All Services
-```bash
-docker compose down
-```
-
-> **Service Access**:
-> - **Web Application**: [`http://localhost:5173`](http://localhost:5173)
-> - **Backend API**: [`http://localhost:5000`](http://localhost:5000)
-> - **Health Check**: [`http://localhost:5000/api/health`](http://localhost:5000/api/health)
 
 ---
 
-## 💻 Running Web & Backend Locally (Without Docker)
+## 🚀 Steps to Run the Backend
 
-### 1. Start PostgreSQL Database Container
+### Method A: Docker Compose (Automated - Recommended)
 ```bash
-docker compose up -d postgres
+docker compose up -d --build backend postgres
 ```
 
-### 2. Start Backend API
-```bash
-cd backend
-npm install
-npx prisma db push
-npm run dev
-```
+### Method B: Manual Local Setup (Without Docker)
 
-### 3. Start Web Frontend
+1. **Start PostgreSQL Container / Database**:
+   ```bash
+   docker compose up -d postgres
+   ```
+2. **Install Dependencies & Seed Schema**:
+   ```bash
+   cd backend
+   npm install
+   npx prisma db push
+   ```
+3. **Start Node.js + Express Server**:
+   ```bash
+   npm run dev
+   ```
+   * **Backend API**: [`http://localhost:5000`](http://localhost:5000)
+   * **Health Check**: [`http://localhost:5000/api/health`](http://localhost:5000/api/health)
+
+---
+
+## 💻 Steps to Run the Frontend
+
+### 1. Web Frontend (React + Vite)
+
+#### Option A: Docker Container
+```bash
+docker compose up -d --build web
+```
+Access the web application at [`http://localhost:5173`](http://localhost:5173).
+
+#### Option B: Manual Local Execution
 ```bash
 cd web
 npm install
 npm run dev
 ```
+Open your browser at [`http://localhost:5173`](http://localhost:5173).
 
 ---
 
-## 📱 Running Mobile App (React Native Expo)
+### 2. Mobile Frontend (React Native + Expo)
 
 ```bash
 cd mobile
@@ -211,9 +222,13 @@ npm install
 npx expo start
 ```
 
+* Press **`a`** to launch in **Android Emulator**.
+* Press **`i`** to launch in **iOS Simulator**.
+* Scan the QR code using **Expo Go** on your physical smartphone.
+
 > **Note for Mobile Devices & Emulators**:
 > - **Android Emulator**: Uses `http://10.0.2.2:5000` automatically.
-> - **Physical iOS/Android Device**: Automatically connects via dynamic LAN IP (`getBackendUrl()`). Ensure device and computer are on the same Wi-Fi network.
+> - **Physical iOS/Android Device**: Automatically connects via dynamic LAN IP (`getBackendUrl()`). Ensure device and host machine are connected to the same Wi-Fi network.
 
 ---
 

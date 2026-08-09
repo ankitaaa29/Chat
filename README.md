@@ -289,6 +289,46 @@ npx expo start
 
 ---
 
+## 🌐 Live Cloud Deployment Guide (Render & Railway)
+
+### Option A: Deploying on Render (Free Web Service + Free PostgreSQL)
+
+1. **Step 1: Create a PostgreSQL Database on Render**
+   - Go to [render.com](https://render.com/) and click **New + → PostgreSQL**.
+   - Set Name: `pulsechat-postgres`.
+   - Click **Create Database** and copy the **Internal / External Connection String**.
+
+2. **Step 2: Create a Web Service for Backend API**
+   - Click **New + → Web Service**.
+   - Connect your GitHub Repository: `https://github.com/ankitaaa29/Chat`.
+   - Set **Root Directory**: `backend`
+   - Set **Build Command**: `npm install && npx prisma generate && npx prisma db push`
+   - Set **Start Command**: `npm start`
+   - Add Environment Variables under **Advanced**:
+     - `DATABASE_URL`: *(Paste Render PostgreSQL Connection String)*
+     - `JWT_SECRET`: `pulsechat_production_jwt_secret`
+     - `PORT`: `5000`
+     - `NODE_ENV`: `production`
+     - `CLIENT_URL`: `*`
+   - Click **Create Web Service**.
+
+3. **Step 3: Access Live Backend API URL**
+   - Render will generate your live URL (e.g. `https://chat-backend-production.onrender.com`).
+   - Test health check: `https://chat-backend-production.onrender.com/api/health`
+
+---
+
+### Option B: Deploying on Railway (1-Click Deployment)
+
+1. Go to [railway.app](https://railway.app/) and create a **New Project**.
+2. Select **Deploy from GitHub Repo** → Choose `ankitaaa29/Chat`.
+3. Add a **PostgreSQL** database service to the canvas.
+4. Set the Root Directory of the Node service to `backend`.
+5. Set `DATABASE_URL` to `${{Postgres.DATABASE_URL}}`.
+6. Railway will auto-detect Docker / Node.js and generate a live URL (e.g., `https://chat-backend-production.up.railway.app`).
+
+---
+
 ## 📄 License & Repository
 
 - **GitHub Repository**: [https://github.com/ankitaaa29/Chat.git](https://github.com/ankitaaa29/Chat.git)

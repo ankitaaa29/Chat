@@ -1,10 +1,10 @@
-# PulseChat - Production Real-Time Chat Monorepo
+# PulseChat - Real-Time Chat Platform Monorepo
 
-PulseChat is a full-stack, enterprise-grade real-time chat platform built as a clean monorepo. It features a modern **React + Vite** web client, a **React Native + Expo** mobile application, a **Node.js + Express** backend API powered by **Socket.io**, and a **PostgreSQL** relational database managed via **Prisma ORM**.
+PulseChat is a full-stack, enterprise-grade real-time chat platform built as a clean monorepo. It features a modern **React + Vite** web client, a **React Native + Expo SDK 52** mobile application, a **Node.js + Express** backend API powered by **Socket.io**, and a **PostgreSQL** relational database managed via **Prisma ORM**.
 
 ---
 
-## Architecture
+## 🏗 Architecture
 
 ```text
 ┌─────────────────────────────────────────┐
@@ -30,59 +30,62 @@ PulseChat is a full-stack, enterprise-grade real-time chat platform built as a c
 
 ---
 
-## Features
+## ✨ Features
 
-- ⚡ **Instant Real-Time Messaging**: Bi-directional communication powered by Socket.io.
-- 💾 **Reliable Message Persistence**: Messages are saved to PostgreSQL before broadcasting, preserving full history across page refreshes and container restarts.
-- 👥 **Real-Time Online Presence**: Live online/offline status indicators for all connected users.
-- ✍️ **Debounced Typing Indicators**: Displays real-time typing state ("Ankita is typing...") with automated debounce throttling.
-- 📱 **Cross-Platform Compatibility**: React web client and Expo React Native mobile app share the exact same backend and database.
-- 🎨 **Modern SaaS Interface**: Clean typography, glassmorphism card styling, responsive layouts, subtle shadows, and status badges.
-- 🐳 **Full Docker Orchestration**: PostgreSQL, Backend API, and Web Frontend containerized together with healthchecks and persistence volumes.
+- ⚡ **Instant Real-Time Messaging**: Bi-directional communication powered by mandatory Socket.io integration.
+- 🔒 **1-to-1 Private Contact Messaging**: Secure private conversations between accepted contacts with strict participant authorization.
+- 💾 **Reliable Database Persistence**: Messages, user accounts, and contact relationships are saved to PostgreSQL (Prisma ORM) and persist across browser refreshes and container restarts.
+- 📷 **Photo & Camera Media Attachments**: Send live camera captures and image attachments with persistent disk volumes (`uploads_data`).
+- 👥 **Real-Time Online Presence**: Live online/offline status indicators (`user_status_change`) updated across all connected clients.
+- ✍️ **Debounced Typing Indicators**: Displays real-time typing status ("Ankita is typing...") with automated throttling.
+- 🤝 **Contact Request System**: Search users by username, send contact requests, and accept or decline incoming requests in real time.
+- 📱 **100% Web & Mobile Parity**: Shared Node.js + Express backend powering both the React web application and React Native Expo mobile application.
+- 🎨 **Modern Aurora Design Tokens**: Glassmorphism dark mode interface with initial avatars, theme selector (Aurora, Obsidian, Cyberpunk), bio editor, and password management.
+- 🐳 **Docker & Docker Compose Orchestration**: Containerized PostgreSQL, Express Backend API, and Nginx Web Frontend with health checks and persistent volume mounts.
 
 ---
 
-## Tech Stack
+## 🛠 Tech Stack
 
 | Layer | Technology |
 | :--- | :--- |
-| **Web Frontend** | React 18, Vite 6, Vanilla CSS (Modern Design Tokens), Lucide Icons |
-| **Mobile Frontend** | React Native 0.76, Expo SDK 52, Socket.io-client |
-| **Backend API** | Node.js v20, Express.js, Socket.io v4.8 |
-| **Database & ORM** | PostgreSQL 16, Prisma ORM v6.3 |
+| **Web Frontend** | React 18, Vite 6, Vanilla CSS Tokens (Aurora Glassmorphism), Lucide Icons |
+| **Mobile Frontend** | React Native 0.76, Expo SDK 52, React Native Safe Area Context, Socket.io-client |
+| **Backend API** | Node.js v20, Express.js, JWT Authentication, Multer |
+| **Real-Time Engine** | Socket.io v4.8 |
+| **Database & ORM** | PostgreSQL 16, Prisma ORM v6.19 |
 | **Containerization**| Docker, Docker Compose, Nginx |
 
 ---
 
-## Project Structure
+## 📁 Project Structure
 
 ```text
-realtime-chat-app/
+Chat/
 │
 ├── backend/                  # Node.js + Express + Socket.io Server
 │   ├── src/
-│   │   ├── config/           # Environment & Database connections
-│   │   ├── controllers/      # REST API route handlers
-│   │   ├── middleware/       # Error handling & request validation
+│   │   ├── config/           # Environment & database connections
+│   │   ├── controllers/      # Auth, Contact, Conversation, Message, Upload controllers
+│   │   ├── middleware/       # JWT auth & request validation middleware
 │   │   ├── routes/           # REST endpoint declarations
-│   │   ├── services/         # Business logic & Prisma DB operations
-│   │   ├── sockets/          # Socket.io connection & event handlers
-│   │   ├── utils/            # Logger utilities
-│   │   ├── app.js            # Express app configuration
+│   │   ├── services/         # Business logic & Prisma ORM queries
+│   │   ├── sockets/          # Socket.io connection & real-time handlers
+│   │   ├── utils/            # Logger & helper utilities
+│   │   ├── app.js            # Express app middleware configuration
 │   │   └── server.js         # HTTP & Socket.io server bootstrapper
 │   ├── prisma/
-│   │   └── schema.prisma     # Prisma database schema
+│   │   └── schema.prisma     # Relational database schema
 │   ├── Dockerfile
 │   ├── package.json
 │   └── .env.example
 │
 ├── web/                      # React + Vite SaaS Web Frontend
 │   ├── src/
-│   │   ├── components/       # Reusable UI components
-│   │   ├── pages/            # Login & Chat screens
-│   │   ├── hooks/            # Custom useSocket & useChat hooks
-│   │   ├── services/         # REST API & Socket.io clients
-│   │   ├── utils/            # Time formatters & avatar helpers
+│   │   ├── components/       # MessageList, MessageInput, UserList, NavigationSidebar, etc.
+│   │   ├── pages/            # DashboardPage & LoginPage
+│   │   ├── services/         # REST API & Socket.io client services
+│   │   ├── utils/            # Formatters & avatar color utilities
 │   │   ├── App.jsx
 │   │   └── main.jsx
 │   ├── Dockerfile            # Multi-stage Nginx container build
@@ -91,21 +94,16 @@ realtime-chat-app/
 │
 ├── mobile/                   # React Native + Expo Mobile Frontend
 │   ├── src/
-│   │   ├── components/       # Mobile MessageItem, ConnectionStatus, TypingBar
-│   │   ├── screens/          # LoginScreen & ChatScreen
-│   │   ├── hooks/            # Mobile chat hook
-│   │   ├── services/         # Mobile REST & Socket services
-│   │   └── utils/            # Mobile helper functions
+│   │   ├── components/       # MessageItem component
+│   │   ├── screens/          # LoginScreen, RegisterScreen, DashboardScreen
+│   │   ├── services/         # Mobile REST API & Socket.io services
+│   │   └── utils/            # Mobile helper utilities
 │   ├── app.json              # Expo SDK 52 configuration
 │   ├── App.js                # Mobile app entrypoint
 │   ├── package.json
 │   └── .env.example
 │
-├── docs/
-│   ├── architecture.md       # Full architecture specification
-│   └── api.md                # REST API & Socket event reference
-│
-├── docker-compose.yml        # Orchestration for Postgres, Backend, and Web
+├── docker-compose.yml        # Orchestration for PostgreSQL, Backend, and Web
 ├── .dockerignore
 ├── .gitignore
 └── README.md
@@ -113,23 +111,24 @@ realtime-chat-app/
 
 ---
 
-## Prerequisites
+## ⚙️ Prerequisites
 
-Ensure you have the following installed on your host system:
+Ensure you have the following installed on your system:
 - **Node.js**: v20.x or later
 - **npm**: v10.x or later
 - **Docker & Docker Compose**: Docker Desktop or Docker Engine v20.10+
-- **Expo CLI** (for mobile execution): `npm install -g expo-cli` or `npx expo`
+- **Expo CLI** (for running mobile app): `npx expo`
 
 ---
 
-## Environment Variables
+## 🔑 Environment Variables
 
 ### Backend (`backend/.env`)
 ```env
 PORT=5000
-NODE_ENV=development
-DATABASE_URL=postgresql://chatuser:chatpassword@localhost:5432/chatdb?schema=public
+NODE_ENV=production
+DATABASE_URL=postgresql://chatuser:chatpassword@postgres:5432/chatdb?schema=public
+JWT_SECRET=pulsechat_secret_key
 CLIENT_URL=*
 ```
 
@@ -147,58 +146,55 @@ EXPO_PUBLIC_SOCKET_URL=http://localhost:5000
 
 ---
 
-## Docker Quick Start (Web + Backend + PostgreSQL)
+## 🐳 Docker Quick Start (Web + Backend + PostgreSQL)
 
 The backend API, web frontend, and PostgreSQL database are fully containerized using Docker Compose.
 
-### 1. Build & Start All Containers
-```bash
-docker compose up --build
-```
-
-### 2. Start in Background Mode
+### 1. Build & Start All Services
 ```bash
 docker compose up -d --build
 ```
 
-### 3. View Logs
+### 2. View Service Logs
 ```bash
-# View live logs for all services
+# Live logs for all services
 docker compose logs -f
 
-# View backend logs only
+# Backend logs only
 docker compose logs -f backend
 
-# View PostgreSQL logs only
+# PostgreSQL logs only
 docker compose logs -f postgres
 ```
 
-### 4. Stop Services
+### 3. Stop All Services
 ```bash
 docker compose down
 ```
 
-> **Accessing Services**:
-> - **Web Application**: `http://localhost:5173`
-> - **Backend API**: `http://localhost:5000`
-> - **Health Check Endpoint**: `http://localhost:5000/api/health`
+> **Service Access**:
+> - **Web Application**: [`http://localhost:5173`](http://localhost:5173)
+> - **Backend API**: [`http://localhost:5000`](http://localhost:5000)
+> - **Health Check**: [`http://localhost:5000/api/health`](http://localhost:5000/api/health)
 
 ---
 
-## Running Web Locally (Without Docker)
+## 💻 Running Web & Backend Locally (Without Docker)
 
-1. Start PostgreSQL instance or container:
+### 1. Start PostgreSQL Database Container
 ```bash
 docker compose up -d postgres
 ```
-2. Setup and run Backend:
+
+### 2. Start Backend API
 ```bash
 cd backend
 npm install
 npx prisma db push
 npm run dev
 ```
-3. Run Web application:
+
+### 3. Start Web Frontend
 ```bash
 cd web
 npm install
@@ -207,9 +203,7 @@ npm run dev
 
 ---
 
-## Running Mobile App (Expo)
-
-The mobile folder is intentionally excluded from Docker and is run natively via Expo.
+## 📱 Running Mobile App (React Native Expo)
 
 ```bash
 cd mobile
@@ -217,71 +211,69 @@ npm install
 npx expo start
 ```
 
-> **Note for Mobile Connectivity**:
-> - **Android Emulator**: Set `EXPO_PUBLIC_API_URL=http://10.0.2.2:5000` and `EXPO_PUBLIC_SOCKET_URL=http://10.0.2.2:5000`.
-> - **Physical iOS/Android Device**: Set `EXPO_PUBLIC_API_URL=http://<YOUR_LOCAL_IP>:5000` and ensure your phone is connected to the same Wi-Fi network.
+> **Note for Mobile Devices & Emulators**:
+> - **Android Emulator**: Uses `http://10.0.2.2:5000` automatically.
+> - **Physical iOS/Android Device**: Automatically connects via dynamic LAN IP (`getBackendUrl()`). Ensure device and computer are on the same Wi-Fi network.
 
 ---
 
-## API Summary
+## 📡 REST API Reference
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/api/health` | Health check endpoint returning DB and server status. |
-| `GET` | `/api/messages?roomId=general` | Returns chat history for specified room. |
-| `POST`| `/api/messages` | Sends a message via REST API and persists to DB. |
-
-Full documentation available in [docs/api.md](file:///c:/Projects/chat/docs/api.md).
+| `GET` | `/api/health` | System health check returning database status. |
+| `POST` | `/api/auth/register` | Register new user account. |
+| `POST` | `/api/auth/login` | Login user and retrieve JWT token. |
+| `GET` | `/api/users/search?username=...` | Search users by username. |
+| `POST` | `/api/contact-requests` | Send contact request. |
+| `GET` | `/api/contact-requests/received` | Fetch received pending requests. |
+| `PATCH`| `/api/contact-requests/:id/accept` | Accept pending contact request. |
+| `GET` | `/api/conversations` | Fetch active user conversations. |
+| `GET` | `/api/conversations/:id/messages` | Fetch chat history for conversation. |
+| `POST` | `/api/conversations/:id/messages` | Send message in private conversation. |
+| `POST` | `/api/upload` | Upload image/camera attachment. |
 
 ---
 
-## Socket.io Events Summary
+## 🔌 Socket.io Events Reference
 
 ### Client → Server
-- `join_room`: `{ username, roomId }`
-- `send_message`: `{ username, content, roomId }`
-- `typing_start`: `{ username, roomId }`
-- `typing_stop`: `{ username, roomId }`
+- `register_user`: `{ username, userId }` — Register active user socket connection.
+- `join_conversation`: `{ conversationId, userId }` — Authorize and join private chat room.
+- `typing_start`: `{ conversationId, username }` — Broadcast typing indicator.
+- `typing_stop`: `{ conversationId, username }` — Broadcast stop typing indicator.
 
 ### Server → Client
-- `new_message`: Saved message object
-- `user_joined`: Notification when user enters room
-- `user_left`: Notification when user disconnects
-- `user_typing`: Typing status notification
-- `user_stopped_typing`: Typing stopped notification
-- `online_users`: Current roster of online users
+- `new_message`: Real-time message broadcast object.
+- `contact_request_received`: Incoming contact request notification.
+- `contact_request_accepted`: Accepted request notification.
+- `user_typing`: Real-time typing notification object.
+- `user_status_change`: Updated list of online/offline user presences.
 
 ---
 
-## Design Decisions
+## 🧠 Design Decisions & Assumptions
 
-1. **Why Socket.io?** Socket.io provides automatic fallback transports (WebSocket with polling fallback), auto-reconnection handling, heartbeats, and room abstraction out-of-the-box for cross-platform clients.
-2. **Why REST APIs for History?** Fetching message history over HTTP REST simplifies caching, initial page hydration, and error retry mechanisms before initiating the real-time Socket.io handshake.
-3. **Why PostgreSQL & Prisma?** PostgreSQL provides strong relational integrity and transactional ACID guarantees. Prisma ORM delivers type safety, automated schema migrations, and clean query builders.
-4. **Why Shared Backend for Web & Mobile?** Sharing a single backend avoids code duplication, maintains a single source of truth for online users and message logs, and ensures real-time cross-device communication between Web and Mobile clients.
-5. **Why Mobile is Excluded from Docker?** React Native / Expo requires native build toolchains (Android SDK, Xcode, Metro Bundler) that run natively on host hardware for device/emulator development.
+1. **Why Socket.io?** Socket.io provides mandatory bi-directional communication, automatic reconnection, heartbeats, and room authorization abstractions across Web and React Native clients.
+2. **Why REST API + Socket.io Hybrid Messaging?** Messages are posted through REST API `createMessage` to enforce DB transaction persistence, strict participant verification, and JWT authorization before emitting `new_message` over Socket.io. This guarantees no message loss on network drops.
+3. **Why PostgreSQL + Prisma ORM?** Relational structure (`User`, `ContactRequest`, `Conversation`, `ConversationParticipant`, `Message`) ensures strict data integrity for 1-to-1 messaging. Prisma provides type safety and automated database migrations.
+4. **Why Persistent Volumes for Uploads?** Mounting `uploads_data:/app/uploads` in Docker ensures media photo attachments are preserved permanently across container rebuilds and server reboots.
+5. **Why Shared Backend for Web & Mobile?** A unified Express + Socket.io backend maintains a single source of truth for online presences, messages, and contact authorizations across all clients.
 
 ---
 
-## Key Verification Tests
-
-To verify full system correctness:
+## ✅ Key Verification Tests
 
 1. **Web Session**: Open Web App at `http://localhost:5173` and log in as `Ankita`.
-2. **Mobile Session**: Open Expo Mobile App and log in as `Rahul`.
-3. **Real-Time Web → Mobile**: Send "Hello from Web" on Web. Message appears instantly on Mobile.
-4. **Real-Time Mobile → Web**: Send "Hi Ankita!" on Mobile. Web displays message instantly.
-5. **Persistence**: Refresh Web browser. All previous messages remain visible.
-6. **Typing Indicator**: Start typing on Mobile. Web shows `Rahul is typing...`. Stop typing, indicator disappears.
-7. **Online Presence**: Close Mobile app. Web updates online user count and marks `Rahul` offline.
-8. **Docker Persistence**: Run `docker compose down` followed by `docker compose up -d`. Data in PostgreSQL persists intact.
+2. **Mobile Session**: Open Expo Mobile App and log in as `Gandhi`.
+3. **Real-Time Messaging**: Send message from Web. Message appears instantly on Mobile.
+4. **Persistence Test**: Refresh Web browser or reload Mobile app. Previous chat history and photo attachments remain 100% intact.
+5. **Typing Indicator**: Type in input box on Mobile. Web displays `Gandhi is typing...`.
+6. **Online Presence**: Log out on Mobile. Web updates online user count and marks `Gandhi` offline.
+7. **Docker Persistence**: Execute `docker compose down` and `docker compose up -d`. All messages and contacts persist in PostgreSQL and disk volume.
 
 ---
 
-## Future Enhancements
+## 📄 License & Repository
 
-- 🔒 Private & Group 1-on-1 direct messaging rooms
-- 📬 Read receipts & message delivery confirmation checkmarks
-- 🖼️ File & media attachments (images/documents)
-- 🔑 JWT-based user authentication & password hashing
-- 🔔 Push notifications for mobile users via Expo Push API
+- **GitHub Repository**: [https://github.com/ankitaaa29/Chat.git](https://github.com/ankitaaa29/Chat.git)

@@ -1,8 +1,7 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import { formatMobileTime, getMobileInitials, getMobileAvatarColor } from '../utils/helpers';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
+import { getBackendUrl } from '../services/api';
 
 export const MessageItem = ({ message, currentUsername, currentUserId }) => {
   const senderUsername = message.sender?.username || message.username || 'User';
@@ -14,10 +13,11 @@ export const MessageItem = ({ message, currentUsername, currentUserId }) => {
 
   const avatarColor = getMobileAvatarColor(senderUsername);
 
+  const baseUrl = getBackendUrl();
   const mediaFullUrl = message.mediaUrl
     ? message.mediaUrl.startsWith('http')
       ? message.mediaUrl
-      : `${API_URL}${message.mediaUrl}`
+      : `${baseUrl}${message.mediaUrl.startsWith('/') ? '' : '/'}${message.mediaUrl}`
     : null;
 
   return (

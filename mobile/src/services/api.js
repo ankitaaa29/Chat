@@ -57,7 +57,8 @@ export const uploadMobileFileApi = async (fileUri, token = null) => {
   const formData = new FormData();
   const filename = fileUri.split('/').pop() || 'photo.jpg';
   const match = /\.(\w+)$/.exec(filename);
-  const type = match ? `image/${match[1]}` : 'image/jpeg';
+  const ext = match ? match[1].toLowerCase() : 'jpg';
+  const type = ext === 'png' ? 'image/png' : ext === 'gif' ? 'image/gif' : 'image/jpeg';
 
   formData.append('file', {
     uri: fileUri,
@@ -65,12 +66,14 @@ export const uploadMobileFileApi = async (fileUri, token = null) => {
     type,
   });
 
+  const headers = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${url}/api/upload`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'multipart/form-data',
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
+    headers,
     body: formData,
   });
 
